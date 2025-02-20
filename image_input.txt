@@ -1,0 +1,198 @@
+public class User
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public string Phone { get; set; }
+    public string Role { get; set; }
+    public bool IsActive { get; set; }
+}
+
+
+
+public class PaginatedUserResponse
+{
+    public List<User> Users { get; set; }
+    public int TotalRecords { get; set; }
+    public int CurrentPage { get; set; }
+    public int PageSize { get; set; }
+}
+
+
+
+public interface IUserService
+{
+    PaginatedUserResponse GetPaginatedUsers(string search, int page, int pageSize, string sortBy, string sortOrder);
+}
+
+
+
+public class UserService : IUserService
+{
+    private readonly ApplicationDbContext _context;
+
+    public UserService(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public PaginatedUserResponse GetPaginatedUsers(string search, int page, int pageSize, string sortBy, string sortOrder)
+    {
+        var query = _context.Users.AsQueryable();
+
+        // Search filtering
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(u => u.Name.Contains(search) || u.Email.Contains(search));
+        }
+
+        // Sorting
+        query = sortOrder.ToLower() == "asc"
+            ? query.OrderBy(u => EF.Property<object>(u, sortBy))
+            : query.OrderByDescending(u => EF.Property<object>(u, sortBy));
+
+        // Pagination
+        int totalRecords = query.Count();
+        List<User> users = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+        return new PaginatedUserResponse
+        {
+            Users = users,
+            TotalRecords = totalRecords,
+            CurrentPage = page,
+            PageSize = pageSize
+        };
+    }
+}
+
+
+
+public class UserController : Controller
+{
+    private readonly IUserService _userService;
+
+    public UserController(IUserService userService)
+    {
+        _userService = userService;
+    }
+
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+    [HttpGet]
+    public IActionResult GetUsers(string search = "", int page = 1, int pageSize = 5, string sortBy = "Name", string sortOrder = "asc")
+    {
+        var users = _userService.GetPaginatedUsers(search, page, pageSize, sortBy, sortOrder);
+        return PartialView("_UserTable", users);
+    }
+}
+
+
+
+@{
+    ViewData["Title"] = "User Management";
+}
+
+<h2>User Management</h2>
+
+<!-- Search & Filters -->
+<div class="mb-3">
+    <input type="text" id="searchBox" placeholder="Search..." class="form-control w-25 d-inline-block" onkeyup="loadUsers(1)">
+    <select id="pageSize" class="form-select w-25 d-inline-block" onchange="loadUsers(1)">
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="15">15</option>
+    </select>
+</div>
+
+<!-- Table Container -->
+<div id="userTable"></div>
+
+<script>
+    var currentPage = 1;
+    var currentSortBy = "Name";
+    var currentSortOrder = "asc";
+
+    function loadUsers(page) {
+        var search = $("#searchBox").val();
+        var pageSize = $("#pageSize").val();
+
+        $.ajax({
+            url: "/User/GetUsers",
+            type: "GET",
+            data: { search, page, pageSize, sortBy: currentSortBy, sortOrder: currentSortOrder },
+            success: function (data) {
+                $("#userTable").html(data);
+            },
+            error: function () {
+                alert("Error loading data.");
+            }
+        });
+
+        currentPage = page;
+    }
+
+    function sortUsers(sortBy) {
+        if (currentSortBy === sortBy) {
+            currentSortOrder = currentSortOrder === "asc" ? "desc" : "asc";
+        } else {
+            currentSortBy = sortBy;
+            currentSortOrder = "asc";
+        }
+        loadUsers(currentPage);
+    }
+
+    $(document).ready(function () {
+        loadUsers(1);
+    });
+</script>
+
+
+
+
+
+@model PaginatedUserResponse
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th><a href="#" onclick="sortUsers('Name')">Name</a></th>
+            <th><a href="#" onclick="sortUsers('Email')">Email</a></th>
+            <th>Phone</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model.Users)
+        {
+            <tr>
+                <td>@user.Name</td>
+                <td>@user.Email</td>
+                <td>@user.Phone</td>
+                <td>@user.Role</td>
+                <td>
+                    <span class="@(user.IsActive ? "text-success" : "text-danger")">
+                        @(user.IsActive ? "Active" : "Inactive")
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="editUser(@user.Id)">Edit</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteUser(@user.Id)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Pagination -->
+<div class="pagination-controls">
+    <button onclick="loadUsers(1)" class="btn btn-secondary" @(Model.CurrentPage == 1 ? "disabled" : "")>First</button>
+    <button onclick="loadUsers(@(Model.CurrentPage - 1))" class="btn btn-secondary" @(Model.CurrentPage == 1 ? "disabled" : "")>Previous</button>
+    <span>Page @Model.CurrentPage of @Math.Ceiling((double)Model.TotalRecords / Model.PageSize)</span>
+    <button onclick="loadUsers(@(Model.CurrentPage + 1))" class="btn btn-secondary" @(Model.CurrentPage * Model.PageSize >= Model.TotalRecords ? "disabled" : "")>Next</button>
+    <button onclick="loadUsers(@(Math.Ceiling((double)Model.TotalRecords / Model.PageSize)))" class="btn btn-secondary">Last</button>
+</div>
