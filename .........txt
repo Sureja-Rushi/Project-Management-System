@@ -1,0 +1,294 @@
+<script>
+    $(document).ready(function () {
+        $("#UpdateUserBtn").click(function (e) {
+            e.preventDefault(); // Prevent default form submission
+
+            var formData = new FormData($("#form")[0]);
+
+            // Ensure userId is correctly sent as an integer
+            let userId = parseInt($("#userId").val());
+            formData.set("UserId", userId); 
+
+            $.ajax({
+                url: "/User/UpdateUser",
+                type: "PUT",
+                data: formData,
+                contentType: false,
+                processData: false,
+                success: function (response) {
+                    alert("Profile updated successfully!");
+                    window.location.href = "/User/UsersList"; // Redirect after update
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error:", error);
+                }
+            });
+        });
+    });
+</script>
+
+
+
+
+
+<script>
+    $(document).ready(function () {
+        $("#state").on("focus", function () {
+            var selectedCountry = $("#country").val();
+            if (!selectedCountry) {
+                alert("Please select a country first.");
+                $(this).blur(); // Remove focus from the state dropdown
+            }
+        });
+
+        $("#city").on("focus", function () {
+            var selectedState = $("#state").val();
+            if (!selectedState) {
+                alert("Please select a state first.");
+                $(this).blur(); // Remove focus from the city dropdown
+            }
+        });
+    });
+</script>
+
+
+
+
+
+
+
+======================================
+
+<!-- Toast Container (Bootstrap 5) -->
+<div aria-live="polite" aria-atomic="true" class="position-relative">
+    <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3"></div>
+</div>
+
+
+
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+<!-- jQuery -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+
+
+Create a new file toast.js inside wwwroot/js/ and add this universal toast 
+function showToast(type, message) {
+    var toastContainer = $("#toastContainer");
+    var toastId = "toast" + new Date().getTime(); // Unique ID for each toast
+
+    var toastClass = "";
+    var icon = "";
+
+    switch (type) {
+        case "success":
+            toastClass = "text-bg-success";
+            icon = "✔️";
+            break;
+        case "error":
+            toastClass = "text-bg-danger";
+            icon = "❌";
+            break;
+        case "warning":
+            toastClass = "text-bg-warning";
+            icon = "⚠️";
+            break;
+        default:
+            toastClass = "text-bg-secondary";
+            icon = "ℹ️";
+    }
+
+    var toastHtml = `
+        <div id="${toastId}" class="toast ${toastClass} fade show" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <strong class="me-auto">${icon} Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">${message}</div>
+        </div>
+    `;
+
+    toastContainer.append(toastHtml);
+
+    setTimeout(function () {
+        $("#" + toastId).toast("hide");
+        setTimeout(() => $("#" + toastId).remove(), 500); // Remove toast after animation
+    }, 3000);
+}
+
+
+
+
+
+
+
+In any .cshtml file where you want toast notifications, 
+@section Scripts {
+    <script src="~/js/toast.js"></script>
+}
+
+
+
+
+
+
+If you want to show toast messages automatically (e.g., after form submission), modify your .cshtml file:
+@section Scripts {
+    <script src="~/js/toast.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <text>showToast("success", "@TempData["SuccessMessage"]");</text>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <text>showToast("error", "@TempData["ErrorMessage"]");</text>
+            }
+            @if (TempData["WarningMessage"] != null)
+            {
+                <text>showToast("warning", "@TempData["WarningMessage"]");</text>
+            }
+        });
+    </script>
+}
+
+
+
+
+
+public IActionResult AddUser()
+{
+    try
+    {
+        // Your user creation logic here
+        TempData["SuccessMessage"] = "User added successfully!";
+    }
+    catch (Exception ex)
+    {
+        TempData["ErrorMessage"] = "Something went wrong: " + ex.Message;
+    }
+    return RedirectToAction("AddUser");
+}
+
+
+
+
+
+
+You can also call showToast directly from a script tag in .cshtml files:
+
+<script>
+    // Show an error toast
+    showToast("error", "This is an error message!");
+
+    // Show a success toast
+    showToast("success", "User successfully registered!");
+
+    // Show a warning toast
+    showToast("warning", "Please select a country first!");
+</script>
+
+
+
+
+===============================================
+Make sure Toastr.js is included in your project by adding these CDN links in _Layout.cshtml:
+<!-- Toastr CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" />
+<!-- jQuery (Required for Toastr) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- Toastr JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+
+Place this before </body> in _Layout.cshtml:
+<script>
+    function showToast(message, type = 'info', title = '') {
+        toastr.options = {
+            closeButton: true,
+            progressBar: true,
+            positionClass: "toast-top-right",
+            timeOut: "3000"
+        };
+
+        switch (type) {
+            case 'success':
+                toastr.success(message, title);
+                break;
+            case 'error':
+                toastr.error(message, title);
+                break;
+            case 'warning':
+                toastr.warning(message, title);
+                break;
+            case 'info':
+                toastr.info(message, title);
+                break;
+            default:
+                toastr.info(message, title);
+                break;
+        }
+    }
+
+    // Show toast if message exists from backend (TempData)
+    $(document).ready(function () {
+        var message = '@TempData["ToastMessage"]';
+        var messageType = '@TempData["ToastType"]';
+        var messageTitle = '@TempData["ToastTitle"]';
+
+        if (message && message !== '') {
+            showToast(message, messageType, messageTitle);
+        }
+    });
+</script>
+
+
+
+
+
+
+In your controller (HomeController.cs), add this:
+public IActionResult Index()
+{
+    TempData["ToastMessage"] = "Welcome back!";
+    TempData["ToastType"] = "success";
+    TempData["ToastTitle"] = "Hello!";
+    return View();
+}
+
+
+
+
+Modify your AJAX request to show a toast dynamically:
+<script>
+    function saveData() {
+        $.ajax({
+            url: '/User/SaveData',
+            type: 'POST',
+            data: { name: 'John Doe', email: 'john@example.com' },
+            success: function (response) {
+                showToast(response.message, response.type, response.title);
+            },
+            error: function () {
+                showToast('Something went wrong!', 'error', 'Error');
+            }
+        });
+    }
+</script>
+
+<button onclick="saveData()">Submit Data (AJAX)</button>
+
+
+
+
+
