@@ -1,0 +1,417 @@
+INSERT INTO "user" (FIRSTNAME, LASTNAME, USERNAME, EMAIL, PASSWORD, CONTACTNUMBER, ROLE_ID, COUNTRY, STATE, CITY, ADDRESS, ZIPCODE, IMAGEURL, STATUS, CREATEDAT, UPDATEDAT, CREATEDBY, UPDATEDBY, ISDELETED) VALUES
+('Walter', 'White', 'walter.white', 'walter.white@yopmail.com', 'hashed_password', '1234567890', 1, 'United States', 'New Mexico', 'Albuquerque', '308 Negra Arroyo Lane', '87104', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Tony', 'Stark', 'tony.stark', 'tony.stark@yopmail.com', 'hashed_password', '1234567891', 3, 'United States', 'California', 'Los Angeles', '10880 Malibu Point', '90265', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Sherlock', 'Holmes', 'sherlock.holmes', 'sherlock.holmes@yopmail.com', 'hashed_password', '1234567892', 4, 'United Kingdom', 'England', 'London', '221B Baker Street', 'NW1 6XE', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Harry', 'Potter', 'harry.potter', 'harry.potter@yopmail.com', 'hashed_password', '1234567893', 1, 'United Kingdom', 'Scotland', 'Edinburgh', '4 Privet Drive', 'EH1 1YZ', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Bruce', 'Wayne', 'bruce.wayne', 'bruce.wayne@yopmail.com', 'hashed_password', '1234567894', 3, 'United States', 'New Jersey', 'Gotham', 'Wayne Manor', '07001', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Ethan', 'Hunt', 'ethan.hunt', 'ethan.hunt@yopmail.com', 'hashed_password', '1234567895', 4, 'United States', 'Virginia', 'Washington D.C.', 'Unknown Address', '20001', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Jack', 'Sparrow', 'jack.sparrow', 'jack.sparrow@yopmail.com', 'hashed_password', '1234567896', 1, 'Bahamas', 'New Providence', 'Nassau', 'Port Royal', '00000', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Lara', 'Croft', 'lara.croft', 'lara.croft@yopmail.com', 'hashed_password', '1234567897', 3, 'United Kingdom', 'England', 'London', 'Croft Manor', 'SW1A 1AA', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('James', 'Bond', 'james.bond', 'james.bond@yopmail.com', 'hashed_password', '1234567898', 4, 'United Kingdom', 'England', 'London', 'MI6 Headquarters', 'SE1 7TP', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Michael', 'Scott', 'michael.scott', 'michael.scott@yopmail.com', 'hashed_password', '1234567899', 1, 'United States', 'Pennsylvania', 'Scranton', '1725 Slough Avenue', '18505', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Darth', 'Vader', 'darth.vader', 'darth.vader@yopmail.com', 'hashed_password', '1234567800', 3, 'United States', 'California', 'Los Angeles', 'Death Star', '90210', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Hannibal', 'Lecter', 'hannibal.lecter', 'hannibal.lecter@yopmail.com', 'hashed_password', '1234567801', 4, 'United States', 'Maryland', 'Baltimore', 'FBI Headquarters', '21201', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Jon', 'Snow', 'jon.snow', 'jon.snow@yopmail.com', 'hashed_password', '1234567802', 1, 'United Kingdom', 'Scotland', 'Inverness', 'Castle Black', 'IV1 1AA', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Arya', 'Stark', 'arya.stark', 'arya.stark@yopmail.com', 'hashed_password', '1234567803', 3, 'United Kingdom', 'England', 'London', 'Winterfell', 'SW1A 1AB', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Frodo', 'Baggins', 'frodo.baggins', 'frodo.baggins@yopmail.com', 'hashed_password', '1234567804', 4, 'New Zealand', 'Wellington', 'Hobbiton', 'Bag End', '6011', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Peter', 'Parker', 'peter.parker', 'peter.parker@yopmail.com', 'hashed_password', '1234567805', 3, 'United States', 'New York', 'Queens', '20 Ingram Street', '11375', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Clark', 'Kent', 'clark.kent', 'clark.kent@yopmail.com', 'hashed_password', '1234567806', 1, 'United States', 'Kansas', 'Smallville', 'Kent Farm', '67401', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Tyler', 'Durden', 'tyler.durden', 'tyler.durden@yopmail.com', 'hashed_password', '1234567807', 4, 'United States', 'Delaware', 'Wilmington', 'Paper Street', '19801', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Neo', 'Anderson', 'neo.anderson', 'neo.anderson@yopmail.com', 'hashed_password', '1234567808', 3, 'United States', 'Illinois', 'Chicago', 'Matrix Street', '60601', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Thanos', 'Titan', 'thanos.titan', 'thanos.titan@yopmail.com', 'hashed_password', '1234567809', 1, 'United States', 'California', 'San Francisco', 'Infinity Tower', '94103', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Leonardo', 'DiCaprio', 'leonardo.dicaprio', 'leonardo.dicaprio@yopmail.com', 'hashed_password', '1234567810', 4, 'United States', 'California', 'Los Angeles', 'Hollywood Hills', '90068', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Tom', 'Hanks', 'tom.hanks', 'tom.hanks@yopmail.com', 'hashed_password', '1234567811', 3, 'United States', 'California', 'Los Angeles', 'Beverly Hills', '90210', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE);
+
+
+
+
+INSERT INTO "user" (FIRSTNAME, LASTNAME, USERNAME, EMAIL, PASSWORD, CONTACTNUMBER, ROLE_ID, COUNTRY, STATE, CITY, ADDRESS, ZIPCODE, IMAGEURL, STATUS, CREATEDAT, UPDATEDAT, CREATEDBY, UPDATEDBY, ISDELETED) VALUES
+('Morgan', 'Freeman', 'morgan.freeman', 'morgan.freeman@yopmail.com', 'hashed_password', '1234567812', 1, 'United States', 'Tennessee', 'Memphis', 'Beale Street', '38103', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Robert', 'Downey', 'robert.downey', 'robert.downey@yopmail.com', 'hashed_password', '1234567813', 3, 'United States', 'California', 'Los Angeles', 'Hollywood Boulevard', '90028', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Keanu', 'Reeves', 'keanu.reeves', 'keanu.reeves@yopmail.com', 'hashed_password', '1234567814', 4, 'Canada', 'British Columbia', 'Vancouver', 'Downtown Vancouver', 'V6B 1H7', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Johnny', 'Depp', 'johnny.depp', 'johnny.depp@yopmail.com', 'hashed_password', '1234567815', 1, 'United States', 'Kentucky', 'Owensboro', 'Cedar Street', '42301', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Will', 'Smith', 'will.smith', 'will.smith@yopmail.com', 'hashed_password', '1234567816', 3, 'United States', 'Pennsylvania', 'Philadelphia', 'West Philly', '19104', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Brad', 'Pitt', 'brad.pitt', 'brad.pitt@yopmail.com', 'hashed_password', '1234567817', 4, 'United States', 'Oklahoma', 'Shawnee', 'Main Street', '74801', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Chris', 'Hemsworth', 'chris.hemsworth', 'chris.hemsworth@yopmail.com', 'hashed_password', '1234567818', 1, 'Australia', 'Victoria', 'Melbourne', 'Docklands', '3008', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Hugh', 'Jackman', 'hugh.jackman', 'hugh.jackman@yopmail.com', 'hashed_password', '1234567819', 3, 'Australia', 'New South Wales', 'Sydney', 'Bondi Beach', '2026', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Dwayne', 'Johnson', 'dwayne.johnson', 'dwayne.johnson@yopmail.com', 'hashed_password', '1234567820', 4, 'United States', 'California', 'Los Angeles', 'Sunset Boulevard', '90069', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Scarlett', 'Johansson', 'scarlett.johansson', 'scarlett.johansson@yopmail.com', 'hashed_password', '1234567821', 1, 'United States', 'New York', 'Manhattan', 'Broadway', '10036', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Angelina', 'Jolie', 'angelina.jolie', 'angelina.jolie@yopmail.com', 'hashed_password', '1234567822', 3, 'United States', 'California', 'Los Angeles', 'Malibu Beach', '90265', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Gal', 'Gadot', 'gal.gadot', 'gal.gadot@yopmail.com', 'hashed_password', '1234567823', 4, 'Israel', 'Tel Aviv District', 'Tel Aviv', 'Rothschild Boulevard', '63293', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Emma', 'Watson', 'emma.watson', 'emma.watson@yopmail.com', 'hashed_password', '1234567824', 1, 'United Kingdom', 'England', 'London', 'Oxford Street', 'W1D 1BS', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Jennifer', 'Lawrence', 'jennifer.lawrence', 'jennifer.lawrence@yopmail.com', 'hashed_password', '1234567825', 3, 'United States', 'Kentucky', 'Louisville', 'Market Street', '40202', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Chris', 'Evans', 'chris.evans', 'chris.evans@yopmail.com', 'hashed_password', '1234567826', 4, 'United States', 'Massachusetts', 'Boston', 'Beacon Hill', '02108', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Benedict', 'Cumberbatch', 'benedict.cumberbatch', 'benedict.cumberbatch@yopmail.com', 'hashed_password', '1234567827', 1, 'United Kingdom', 'England', 'London', 'Baker Street', 'NW1 5RT', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Matthew', 'McConaughey', 'matthew.mcconaughey', 'matthew.mcconaughey@yopmail.com', 'hashed_password', '1234567828', 3, 'United States', 'Texas', 'Austin', 'Congress Avenue', '78701', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Christian', 'Bale', 'christian.bale', 'christian.bale@yopmail.com', 'hashed_password', '1234567829', 4, 'United Kingdom', 'Wales', 'Haverfordwest', 'Castle Square', 'SA61 2EX', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE);
+
+
+
+INSERT INTO "user" (FIRSTNAME, LASTNAME, USERNAME, EMAIL, PASSWORD, CONTACTNUMBER, ROLE_ID, COUNTRY, STATE, CITY, ADDRESS, ZIPCODE, IMAGEURL, STATUS, CREATEDAT, UPDATEDAT, CREATEDBY, UPDATEDBY, ISDELETED) VALUES
+('Tom', 'Hiddleston', 'tom.hiddleston', 'tom.hiddleston@yopmail.com', 'hashed_password', '1234567830', 1, 'United Kingdom', 'England', 'London', 'Soho Square', 'W1D 3QF', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Henry', 'Cavill', 'henry.cavill', 'henry.cavill@yopmail.com', 'hashed_password', '1234567831', 3, 'United Kingdom', 'Channel Islands', 'Saint Helier', 'King Street', 'JE2 4WF', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Jake', 'Gyllenhaal', 'jake.gyllenhaal', 'jake.gyllenhaal@yopmail.com', 'hashed_password', '1234567832', 4, 'United States', 'California', 'Los Angeles', 'Beverly Hills', '90210', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Mark', 'Ruffalo', 'mark.ruffalo', 'mark.ruffalo@yopmail.com', 'hashed_password', '1234567833', 1, 'United States', 'Wisconsin', 'Kenosha', '57th Street', '53140', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Natalie', 'Portman', 'natalie.portman', 'natalie.portman@yopmail.com', 'hashed_password', '1234567834', 3, 'Israel', 'Jerusalem District', 'Jerusalem', 'King David Street', '94101', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Zendaya', 'Coleman', 'zendaya.coleman', 'zendaya.coleman@yopmail.com', 'hashed_password', '1234567835', 4, 'United States', 'California', 'Oakland', 'Telegraph Avenue', '94612', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Pedro', 'Pascal', 'pedro.pascal', 'pedro.pascal@yopmail.com', 'hashed_password', '1234567836', 1, 'Chile', 'Santiago Metropolitan', 'Santiago', 'Avenida Providencia', '7500000', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Andrew', 'Garfield', 'andrew.garfield', 'andrew.garfield@yopmail.com', 'hashed_password', '1234567837', 3, 'United States', 'California', 'Los Angeles', 'Venice Beach', '90291', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Timothée', 'Chalamet', 'timothee.chalamet', 'timothee.chalamet@yopmail.com', 'hashed_password', '1234567838', 4, 'United States', 'New York', 'Manhattan', '5th Avenue', '10011', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE),
+('Florence', 'Pugh', 'florence.pugh', 'florence.pugh@yopmail.com', 'hashed_password', '1234567839', 1, 'United Kingdom', 'England', 'Oxford', 'High Street', 'OX1 4BH', '', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL, NULL, FALSE);
+
+
+
+
+
+INSERT INTO "Permission" (PERMISSIONFIELD_ID, ROLE_ID, CANVIEW, CANADD, CANDELETE, CREATEDBY, UPDATEDBY) VALUES
+-- Admin (Full Access)
+(1, 1, 1, 1, 1, 1, 1),
+(2, 1, 1, 1, 1, 1, 1),
+(3, 1, 1, 1, 1, 1, 1),
+(4, 1, 1, 1, 1, 1, 1),
+(5, 1, 1, 1, 1, 1, 1),
+(6, 1, 1, 1, 1, 1, 1),
+(7, 1, 1, 1, 1, 1, 1),
+
+-- Account Manager (Manages Users, Permissions, and Taxes)
+(1, 2, 1, 1, 0, 1, 1), -- User
+(2, 2, 1, 1, 0, 1, 1), -- Permission Management
+(7, 2, 1, 1, 1, 1, 1), -- Taxes
+
+-- Chef (Manages Orders, Menus, and Tables)
+(3, 3, 1, 1, 0, 1, 1), -- Table
+(5, 3, 1, 1, 0, 1, 1), -- Order
+(6, 3, 1, 1, 1, 1, 1); -- Menu
+
+
+
+
+
+@model List<PermissionViewModel> 
+
+<div class="bg-white w-100 pt-3 pb-0 px-4 table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col" width="3%">-</th>
+                <th scope="col" width="50%">Permission</th>
+                <th scope="col">Can View</th>
+                <th scope="col">Can Add/Edit</th>
+                <th scope="col">Can Delete</th>
+            </tr>
+        </thead>
+        <tbody class="py-2">
+            @foreach (var permission in Model)
+            {
+                <tr class="align-middle" style="height: 50px">
+                    <th scope="row">
+                        <input class="form-check-input permission-check-input custom-border check-permission"
+                               type="checkbox"
+                               id="@permission.Id"
+                               @(permission.IsChecked ? "checked" : "") />
+                    </th>
+                    <td>@permission.Name</td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input permission-check-input custom-border"
+                                   type="checkbox"
+                                   role="switch"
+                                   id="@($"{permission.Id}View")"
+                                   @(permission.CanView ? "checked" : "")
+                                   @(permission.IsChecked ? "" : "disabled") />
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input permission-check-input custom-border"
+                                   type="checkbox"
+                                   role="switch"
+                                   id="@($"{permission.Id}Add")"
+                                   @(permission.CanAdd ? "checked" : "")
+                                   @(permission.IsChecked ? "" : "disabled") />
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input permission-check-input custom-border"
+                                   type="checkbox"
+                                   role="switch"
+                                   id="@($"{permission.Id}Delete")"
+                                   @(permission.CanDelete ? "checked" : "")
+                                   @(permission.IsChecked ? "" : "disabled") />
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<div class="pt-2 pt-sm-0 pb-3 px-4 d-flex justify-content-center justify-content-sm-end gap-3">
+    <button type="submit" class="pizza-bg p-2 px-3 border-0 rounded-1 text-white fw-semibold">
+        Save
+    </button>
+    <a href="roles.html" class="text-decoration-none border-0">
+        <button type="button" class="blue-text p-2 px-3 rounded-1 bg-transparent fw-semibold"
+                style="border: 1px solid #2272ac">
+            Cancel
+        </button>
+    </a>
+</div>
+
+
+
+
+
+
+
+public class PermissionViewModel
+{
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public bool IsChecked { get; set; }
+    public bool CanView { get; set; }
+    public bool CanAdd { get; set; }
+    public bool CanDelete { get; set; }
+}
+
+
+
+
+
+
+@model List<PermissionViewModel>
+
+@Html.Partial("_Permissions", Model)
+
+
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $(".permission-check-input[type='checkbox']:not([role='switch'])").change(function () {
+            var row = $(this).closest("tr");
+            var switches = row.find(".permission-check-input[role='switch']");
+
+            if ($(this).is(":checked")) {
+                switches.prop("disabled", false);
+            } else {
+                switches.prop("checked", false).prop("disabled", true);
+            }
+        });
+
+        $(".permission-check-input[type='checkbox']:not([role='switch'])").trigger("change");
+    });
+</script>
+
+
+
+
+
+
+
+
+
+
+public class Role
+{
+    public int RoleId { get; set; }
+    public string Name { get; set; }
+    public bool IsDeleted { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+
+    public ICollection<Permission> Permissions { get; set; }
+}
+
+
+
+
+
+public class PermissionField
+{
+    public int PermissionFieldId { get; set; }
+    public string PermissionFieldName { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+
+    public ICollection<Permission> Permissions { get; set; }
+}
+
+
+
+
+
+public class Permission
+{
+    public int PermissionId { get; set; }
+    public int PermissionFieldId { get; set; }
+    public int RoleId { get; set; }
+    public bool CanView { get; set; }
+    public bool CanAdd { get; set; }
+    public bool CanDelete { get; set; }
+    public int CreatedBy { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public int UpdatedBy { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; }
+
+    public Role Role { get; set; }
+    public PermissionField PermissionField { get; set; }
+}
+
+
+
+
+
+public class ApplicationDbContext : DbContext
+{
+    public DbSet<Role> Roles { get; set; }
+    public DbSet<Permission> Permissions { get; set; }
+    public DbSet<PermissionField> PermissionFields { get; set; }
+
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    {
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Role>()
+            .HasMany(r => r.Permissions)
+            .WithOne(p => p.Role)
+            .HasForeignKey(p => p.RoleId);
+
+        modelBuilder.Entity<PermissionField>()
+            .HasMany(pf => pf.Permissions)
+            .WithOne(p => p.PermissionField)
+            .HasForeignKey(p => p.PermissionFieldId);
+    }
+}
+
+
+
+
+
+
+public class PermissionRepository
+{
+    private readonly ApplicationDbContext _context;
+
+    public PermissionRepository(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<List<Permission>> GetPermissionsByRoleIdAsync(int roleId)
+    {
+        return await _context.Permissions
+            .Where(p => p.RoleId == roleId && !p.IsDeleted)
+            .Include(p => p.Role)
+            .Include(p => p.PermissionField) // Include PermissionField details
+            .ToListAsync();
+    }
+}
+
+
+
+
+
+
+public class PermissionService
+{
+    private readonly PermissionRepository _permissionRepository;
+
+    public PermissionService(PermissionRepository permissionRepository)
+    {
+        _permissionRepository = permissionRepository;
+    }
+
+    public async Task<List<Permission>> GetPermissionsByRoleAsync(int roleId)
+    {
+        return await _permissionRepository.GetPermissionsByRoleIdAsync(roleId);
+    }
+}
+
+
+
+
+
+
+
+public class PermissionsController : Controller
+{
+    private readonly PermissionService _permissionService;
+
+    public PermissionsController(PermissionService permissionService)
+    {
+        _permissionService = permissionService;
+    }
+
+    public async Task<IActionResult> GetPermissionsByRole(int roleId)
+    {
+        var permissions = await _permissionService.GetPermissionsByRoleAsync(roleId);
+        return Json(permissions);
+    }
+}
+
+
+
+
+
+
+
+function fetchPermissions(roleId) {
+    $.ajax({
+        url: '/Permissions/GetPermissionsByRole',
+        type: 'GET',
+        data: { roleId: roleId },
+        success: function(response) {
+            console.log(response); // Handle data (populate table, dropdown, etc.)
+        },
+        error: function(error) {
+            console.error('Error fetching permissions:', error);
+        }
+    });
+}
+
+
+
+
+
+
+
+response===================
+[
+    {
+        "permissionId": 8,
+        "roleId": 2,
+        "role": { "roleId": 2, "name": "Account Manager" },
+        "permissionFieldId": 1,
+        "permissionField": { "permissionFieldId": 1, "permissionFieldName": "User" },
+        "canView": true,
+        "canAdd": true,
+        "canDelete": false
+    },
+    {
+        "permissionId": 9,
+        "roleId": 2,
+        "role": { "roleId": 2, "name": "Account Manager" },
+        "permissionFieldId": 2,
+        "permissionField": { "permissionFieldId": 2, "permissionFieldName": "Permission Management" },
+        "canView": true,
+        "canAdd": true,
+        "canDelete": false
+    },
+    {
+        "permissionId": 10,
+        "roleId": 2,
+        "role": { "roleId": 2, "name": "Account Manager" },
+        "permissionFieldId": 7,
+        "permissionField": { "permissionFieldId": 7, "permissionFieldName": "Taxes" },
+        "canView": true,
+        "canAdd": true,
+        "canDelete": true
+    }
+]
