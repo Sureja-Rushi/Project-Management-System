@@ -522,3 +522,257 @@ public class CategoryController : Controller
 
 
 
+
+
+
+
+
+CREATE TABLE User (
+    user_id SERIAL PRIMARY KEY,
+    FirstName VARCHAR(50),
+    LastName VARCHAR(50),
+    UserName VARCHAR(50) UNIQUE,
+    Email VARCHAR(100) UNIQUE,
+    Password VARCHAR(255),
+    role_id INT REFERENCES Role(role_id),
+    ImageUrl VARCHAR(255),
+    Country VARCHAR(30),
+    State VARCHAR(30),
+    City VARCHAR(30),
+    ZipCode VARCHAR(10),
+    Address VARCHAR(255),
+    ContactNumber VARCHAR(15),
+    Status BOOLEAN,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CreatedBy INT REFERENCES User(user_id),
+    UpdatedBy INT REFERENCES User(user_id),
+    IsDeleted BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE ResetToken (
+    token_id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES User(user_id),
+    token VARCHAR(255) UNIQUE,
+    isReseted BOOLEAN DEFAULT FALSE,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ExpiredAt TIMESTAMP
+);
+
+CREATE TABLE Role (
+    role_id SERIAL PRIMARY KEY,
+    RoleName VARCHAR(50) UNIQUE
+);
+
+CREATE TABLE PermissionField (
+    permissionField_id SERIAL PRIMARY KEY,
+    moduleName VARCHAR(50) UNIQUE
+);
+
+CREATE TABLE Permission (
+    permission_id SERIAL PRIMARY KEY,
+    permissionField_id INT REFERENCES PermissionField(permissionField_id),
+    role_id INT REFERENCES Role(role_id),
+    CanView BOOLEAN DEFAULT FALSE,
+    CanAdd BOOLEAN DEFAULT FALSE,
+    CanDelete BOOLEAN DEFAULT FALSE,
+    CreatedBy INT REFERENCES User(user_id),
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedBy INT REFERENCES User(user_id),
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    IsDeleted BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE Category (
+    category_id SERIAL PRIMARY KEY,
+    CategoryName VARCHAR(50) UNIQUE,
+    Description TEXT,
+    IsDeleted BOOLEAN DEFAULT FALSE,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CreatedBy INT REFERENCES User(user_id),
+    UpdatedBy INT REFERENCES User(user_id)
+);
+
+CREATE TABLE Item (
+    item_id SERIAL PRIMARY KEY,
+    Name VARCHAR(50),
+    Description TEXT,
+    itemType VARCHAR(50),
+    Rate NUMERIC(10,2),
+    Quantity INT,
+    isAvailable BOOLEAN DEFAULT TRUE,
+    category_id INT REFERENCES Category(category_id),
+    isDeleted BOOLEAN DEFAULT FALSE,
+    Unit_id INT REFERENCES Units(unit_id),
+    DefaultTax BOOLEAN DEFAULT FALSE,
+    TaxPercentage NUMERIC(5,2),
+    ShortCode VARCHAR(20) UNIQUE,
+    ImageUrl VARCHAR(255),
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CreatedBy INT REFERENCES User(user_id),
+    UpdatedBy INT REFERENCES User(user_id)
+);
+
+CREATE TABLE Units (
+    unit_id SERIAL PRIMARY KEY,
+    name VARCHAR(50),
+    shortName VARCHAR(20) UNIQUE
+);
+
+CREATE TABLE ModifierGroup (
+    modifierGroup_id SERIAL PRIMARY KEY,
+    GroupName VARCHAR(50) UNIQUE,
+    Description TEXT,
+    isDeleted BOOLEAN DEFAULT FALSE,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CreatedBy INT REFERENCES User(user_id),
+    UpdatedBy INT REFERENCES User(user_id)
+);
+
+CREATE TABLE Modifier (
+    modifier_id SERIAL PRIMARY KEY,
+    Name VARCHAR(50),
+    Rate NUMERIC(10,2),
+    Unit INT REFERENCES Units(unit_id),
+    Quantity INT,
+    Description TEXT,
+    isDeleted BOOLEAN DEFAULT FALSE,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CreatedBy INT REFERENCES User(user_id),
+    UpdatedBy INT REFERENCES User(user_id)
+);
+
+CREATE TABLE ModifierToModifierGroup (
+    modifierToGroup_id SERIAL PRIMARY KEY,
+    modifierGroup_id INT REFERENCES ModifierGroup(modifierGroup_id),
+    modifier_id INT REFERENCES Modifier(modifier_id),
+    isDeleted BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE ItemToModifierGroup (
+    itemToGroup_id SERIAL PRIMARY KEY,
+    item_id INT REFERENCES Item(item_id),
+    modifierGroup_id INT REFERENCES ModifierGroup(modifierGroup_id)
+);
+
+CREATE TABLE Section (
+    section_id SERIAL PRIMARY KEY,
+    Name VARCHAR(50),
+    Description TEXT,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CreatedBy INT REFERENCES User(user_id),
+    UpdatedBy INT REFERENCES User(user_id)
+);
+
+CREATE TABLE TableLayout (
+    table_id SERIAL PRIMARY KEY,
+    Name VARCHAR(50),
+    section_id INT REFERENCES Section(section_id),
+    Capacity INT,
+    Status BOOLEAN DEFAULT TRUE,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CreatedBy INT REFERENCES User(user_id),
+    UpdatedBy INT REFERENCES User(user_id)
+);
+
+CREATE TABLE Tax (
+    tax_id SERIAL PRIMARY KEY,
+    Name VARCHAR(50) UNIQUE,
+    isEnabled BOOLEAN DEFAULT TRUE,
+    Default BOOLEAN DEFAULT FALSE,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CreatedBy INT REFERENCES User(user_id),
+    UpdatedBy INT REFERENCES User(user_id),
+    TaxType VARCHAR(50),
+    Amount NUMERIC(10,2)
+);
+
+CREATE TABLE FavouriteItem (
+    favouriteItem_id SERIAL PRIMARY KEY,
+    item_id INT REFERENCES Item(item_id)
+);
+
+CREATE TABLE Customer (
+    customer_id SERIAL PRIMARY KEY,
+    FirstName VARCHAR(50),
+    LastName VARCHAR(50),
+    ContactNumber VARCHAR(15) UNIQUE,
+    Email VARCHAR(100) UNIQUE,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CreatedBy INT REFERENCES User(user_id),
+    UpdatedBy INT REFERENCES User(user_id),
+    isDeleted BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE OrderDetails (
+    order_id SERIAL PRIMARY KEY,
+    customer_id INT REFERENCES Customer(customer_id),
+    OrderStatus VARCHAR(50),
+    OrderDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    TotalAmount NUMERIC(10,2),
+    NoOfPerson INT,
+    FoodRate INT,
+    ServiceRate INT,
+    AmbienceRate INT,
+    Comment TEXT
+);
+
+CREATE TABLE OrderToTable (
+    orderToTable_id SERIAL PRIMARY KEY,
+    table_id INT REFERENCES TableLayout(table_id),
+    order_id INT REFERENCES OrderDetails(order_id)
+);
+
+CREATE TABLE OrderToItem (
+    orderToItem_id SERIAL PRIMARY KEY,
+    order_id INT REFERENCES OrderDetails(order_id),
+    item_id INT REFERENCES Item(item_id),
+    Instruction TEXT,
+    Quantity INT,
+    Amount NUMERIC(10,2),
+    Status VARCHAR(50)
+);
+
+CREATE TABLE OrderItemModifier (
+    orderItemModifier_id SERIAL PRIMARY KEY,
+    orderToItem_id INT REFERENCES OrderToItem(orderToItem_id),
+    modifier_id INT REFERENCES Modifier(modifier_id)
+);
+
+CREATE TABLE WaitingToken (
+    waitingToken_id SERIAL PRIMARY KEY,
+    section_id INT REFERENCES Section(section_id),
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    WaitingTime TIME
+);
+
+CREATE TABLE Payment (
+    payment_id SERIAL PRIMARY KEY,
+    order_id INT REFERENCES OrderDetails(order_id),
+    paymentMethod VARCHAR(50),
+    paymentStatus VARCHAR(50),
+    Amount NUMERIC(10,2),
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Rating (
+    rating_id SERIAL PRIMARY KEY,
+    order_Id INT REFERENCES OrderDetails(order_id),
+    FoodRate NUMERIC(2,1),
+    ServiceRate NUMERIC(2,1),
+    AmbienceRate NUMERIC(2,1),
+    Comment TEXT,
+    CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UpdatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CreatedBy INT REFERENCES User(user_id),
+    UpdatedBy INT REFERENCES User(user_id)
+);
