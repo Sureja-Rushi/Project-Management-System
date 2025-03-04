@@ -776,3 +776,221 @@ CREATE TABLE Rating (
     CreatedBy INT REFERENCES User(user_id),
     UpdatedBy INT REFERENCES User(user_id)
 );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+using Microsoft.AspNetCore.Http;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace pizzaShop_Services.Middleware;
+
+public class JwtMiddleware
+{
+    private readonly RequestDelegate _next;
+
+    public JwtMiddleware(RequestDelegate next)
+    {
+        _next = next;
+    }
+
+    public async Task Invoke(HttpContext context)
+    {
+        var token = context.Request.Cookies["AuthToken"];
+        if (!string.IsNullOrEmpty(token))
+        {
+            context.Request.Headers.Add("Authorization", "Bearer " + token);
+        }
+        else
+        {
+            // Check if an [Authorize] attribute is applied on the route
+            var endpoint = context.GetEndpoint();
+            var hasAuthorizeAttribute = endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>() != null;
+
+            if (hasAuthorizeAttribute)
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                await context.Response.WriteAsync("Unauthorized: JWT token is missing.");
+                return;
+            }
+        }
+
+        await _next(context);
+    }
+}
+
+
+
+
+
+
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using pizzaShop_Models.Repositories.Interfaces;
+
+namespace pizzaShop_Services.Middleware;
+
+public class PermissionAuthorizationHandler : AuthorizationHandler<PermissionRequirement>
+{
+    private readonly IPermissionRepository _permissionRepository;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public PermissionAuthorizationHandler(IPermissionRepository permissionRepository, IHttpContextAccessor httpContextAccessor)
+    {
+        _permissionRepository = permissionRepository;
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext == null || httpContext.User == null)
+        {
+            context.Fail();
+            return;
+        }
+
+        var endpoint = httpContext.GetEndpoint();
+        var hasAuthorizeAttribute = endpoint?.Metadata.GetMetadata<AuthorizeAttribute>() != null;
+
+        // If no [Authorize] attribute, just check for JWT authentication
+        if (!hasAuthorizeAttribute)
+        {
+            context.Succeed(requirement);
+            return;
+        }
+
+        // Otherwise, check role-based permission
+        var user = httpContext.User;
+        if (await _permissionRepository.HasPermissionAsync(user, requirement.PermissionField, requirement.PermissionType))
+        {
+            context.Succeed(requirement);
+        }
+        else
+        {
+            context.Fail();
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+using Microsoft.AspNetCore.Authorization;
+using pizzaShop_Services.Middleware;
+using pizzaShop_Models.Repositories.Interfaces;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("PermissionPolicy", policy =>
+        policy.Requirements.Add(new PermissionRequirement("Invalid:Invalid"))); // Placeholder
+});
+
+var app = builder.Build();
+
+// Add JwtMiddleware before authentication
+app.UseMiddleware<JwtMiddleware>();
+
+app.UseAuthorization();
+app.MapControllers();
+app.Run();
+
+
+
+
+
+
+
+
+[Authorize] // Only checks JWT
+public IActionResult Index()
+{
+    return View();
+}
+
+[Authorize("ManageCategories:CanView")] // Checks both JWT and permissions
+public IActionResult ViewCategory()
+{
+    return View();
+}
+
+[Authorize("ManageCategories:CanAdd")]
+[HttpPost]
+public IActionResult AddCategory(CategoryViewModel model)
+{
+    return Json(new { message = "Category added successfully" });
+}
+
+[Authorize("ManageCategories:CanDelete")]
+[HttpDelete]
+public IActionResult DeleteCategory(int categoryId)
+{
+    return Json(new { message = "Category deleted successfully" });
+}
+
+
+=========================================
+
+
+$(document).ready(function () {
+    // Automatically select the first category when the page loads
+    var firstCategory = $("[id^=category-]").first();
+    if (firstCategory.length > 0) {
+        selectCategory(firstCategory.attr("id")); // Call selectCategory function
+    }
+});
+
+function selectCategory(id) {
+    var selectedElement = $(`#${id}`);
+
+    // Reset all category elements
+    $("[id^=category-]").css("background-color", "transparent").removeClass("shadow-sm").find(".action-btns").addClass("d-none");
+
+    // Highlight the selected category
+    selectedElement.css("background-color", "#F1F5F2").addClass("shadow-sm").find(".action-btns").addClass("d-none");
+
+    // Remove selection from all and set the selected category
+    $("[id^=category-]").removeAttr("data-selected");
+    selectedElement.attr("data-selected", "true");
+
+    // Update the hidden input field for selected category ID
+    var categoryId = selectedElement.data("category-id");
+    $("#selectedCategoryId").val(categoryId);
+
+    // Load items for the selected category
+    loadCategoryItems(categoryId, 1);
+}
+
