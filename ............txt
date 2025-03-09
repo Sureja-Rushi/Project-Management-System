@@ -1,408 +1,653 @@
-$(document).ready(function () {
-    let currentPage = 1;
-    let pageSize = $("#pageSizeDropDown").val();
+ $("#confirmDeleteManyItemsBtn").on("click", function () {
+                console.log("Deleting items:", selectedItems); // Debugging output
 
-    // Load items when page size is changed
-    $("#pageSizeDropDown").change(function () {
-        pageSize = $(this).val();
-        loadItems(1, pageSize); // Reload with new page size from first page
-    });
+                $.ajax({
+                    url: "/Menu/DeleteManyItems",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({ itemIds: selectedItems }),
+                    success: function (response) {
+                        if (response.success) {
+                            showToast("Items deleted successfully!", "success", "Success");
 
-    // Previous Page Button Click
-    $("#previousItemPage").click(function () {
-        if (currentPage > 1) {
-            loadItems(currentPage - 1, pageSize);
+                            // Remove deleted items from the table without refreshing the page
+                            selectedItems.forEach(id => {
+                                $(`button[data-id="${id}"]`).closest("tr").remove();
+                            });
+
+                            selectedItems = [];
+                            $("#deleteManyItemsBtn").prop("disabled", true);
+                            $("#allItemCheck").prop("checked", false);
+                        } else {
+                            showToast("Failed to delete items!", "error", "Error");
+                        }
+
+                        $("#deleteSelectedItemsModal").modal("hide");
+                    },
+                    error: function () {
+                        showToast("An error occurred!", "error", "Error");
+                        $("#deleteSelectedItemsModal").modal("hide");
+                    }
+                });
+            });
+
+
+
+
+
+
+========================================
+
+
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
+
+namespace pizzaShop_Models.ViewModel
+{
+    public class AddItemViewModel
+    {
+        public int ItemId { get; set; }
+
+        [Required(ErrorMessage = "Name is required")]
+        public string Name { get; set; } = null!;
+
+        public string? Description { get; set; }
+
+        [Required(ErrorMessage = "Item Type is required")]
+        public string ItemType { get; set; } = null!;
+
+        [Required]
+        public decimal Rate { get; set; }
+
+        [Required]
+        public int Quantity { get; set; }
+
+        [Required]
+        public int CategoryId { get; set; }
+
+        public bool IsAvailable { get; set; } = true;
+        public bool DefaultTax { get; set; } = false;
+        public decimal? TaxPercentage { get; set; }
+        public string? ShortCode { get; set; }
+        public string? ImageUrl { get; set; }
+
+        public IFormFile? ProfileImage { get; set; }
+        public int UnitId { get; set; }
+
+        // Store selected modifier groups as a list
+        public List<int> SelectedModifierGroups { get; set; } = new List<int>();
+    }
+}
+
+
+
+
+
+<div class="col-sm-12 mb-3">
+    <label for="modifierGroupsDropdown" class="tab-text">Select Modifier Group(s)</label>
+    <select id="modifierGroupsDropdown" class="form-select custom-border text-black rounded-1 shadow-none">
+        <option value="" disabled hidden selected>Select Modifier Group</option>
+        @foreach (var group in Model.ModifierGroups)
+        {
+            <option value="@group.ModifiergroupId">@group.Groupname</option>
+        }
+    </select>
+</div>
+
+<div id="selectedModifierGroupsContainer" class="border p-2 rounded bg-light">
+    <p class="fw-semibold">Selected Modifier Groups:</p>
+    <div id="selectedModifierGroups"></div>
+</div>
+
+<script>
+    let selectedModifierGroups = [];
+
+    $("#modifierGroupsDropdown").change(function () {
+        let groupId = $(this).val();
+        let groupName = $("#modifierGroupsDropdown option:selected").text();
+
+        if (!selectedModifierGroups.includes(groupId)) {
+            selectedModifierGroups.push(groupId);
+            $("#selectedModifierGroups").append(
+                `<div class="selected-group d-flex align-items-center justify-content-between p-2 bg-white border rounded mb-2">
+                    <span>${groupName}</span>
+                    <button type="button" class="btn btn-danger btn-sm remove-group" data-id="${groupId}">X</button>
+                </div>`
+            );
         }
     });
 
-    // Next Page Button Click
-    $("#nextItemPage").click(function () {
-        loadItems(currentPage + 1, pageSize);
+    $(document).on("click", ".remove-group", function () {
+        let groupId = $(this).data("id");
+        selectedModifierGroups = selectedModifierGroups.filter(id => id != groupId);
+        $(this).parent().remove();
     });
 
-    // Function to Fetch Paginated Items
-    function loadItems(page, pageSize) {
+    function addItem() {
+        let formData = new FormData();
+        formData.set("Name", $("#itemName").val());
+        formData.set("ItemType", $("#itemType").val());
+        formData.set("Rate", $("#rate").val());
+        formData.set("Quantity", $("#quantity").val());
+        formData.set("CategoryId", $("#addItemCategoryDropdown").val());
+        formData.set("UnitId", $("#unitDropDown").val());
+        formData.set("ShortCode", $("#shortCode").val());
+        formData.set("Description", $("#description").val());
+        formData.set("IsAvailable", $("#isAvailable").prop("checked"));
+        formData.set("DefaultTax", $("#isDefaultTax").prop("checked"));
+        formData.set("TaxPercentage", $("#taxPercentage").val());
+        
+        // Convert selected modifier groups to JSON
+        formData.set("SelectedModifierGroups", JSON.stringify(selectedModifierGroups));
+
+        let imageInput = $("#imageInput")[0];
+        if (imageInput.files.length > 0) {
+            formData.set("ProfileImage", imageInput.files[0]);
+        }
+
         $.ajax({
-            url: "/Menu/GetItems",
-            method: "GET",
-            data: { page: page, pageSize: pageSize },
+            url: "/Menu/AddItem",
+            method: "POST",
+            data: formData,
+            contentType: false,
+            processData: false,
             success: function (response) {
-                $("#itemContainer").html(response);
+                if (response.success) {
+                    showToast("Item added successfully!", "success", "Success");
+                    window.location.reload();
+                } else {
+                    showToast(response.message, "error", "Error");
+                }
             },
-            error: function () {
-                alert("Failed to load items.");
+            error: function (xhr) {
+                showToast("Error adding item", "error", "Error");
             }
         });
     }
-
-    // Function to Update Pagination UI
-    window.updatePagination = function (page, pageSize, totalItems) {
-        currentPage = page;
-        let totalPages = Math.ceil(totalItems / pageSize);
-        let startItem = (page - 1) * pageSize + 1;
-        let endItem = Math.min(page * pageSize, totalItems);
-
-        $("#paginationInfo").text(`Showing ${startItem}-${endItem} of ${totalItems}`);
-
-        // Enable/Disable buttons based on the page number
-        $("#previousItemPage").prop("disabled", page <= 1);
-        $("#nextItemPage").prop("disabled", page >= totalPages);
-    };
-});
-
-
-
-
-
-
-
-
-@model pizzaShop_Models.ViewModel.PaginatedResponseViewModel<Item>
-
-<table class="table">
-    <thead>
-        <tr>
-            <th scope="col">Name</th>
-            <th scope="col">Rate</th>
-            <th scope="col">Quantity</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model.Items)
-        {
-            <tr>
-                <td>@item.Name</td>
-                <td>@item.Rate</td>
-                <td>@item.Quantity</td>
-            </tr>
-        }
-    </tbody>
-</table>
-
-<script>
-    updatePagination(@Model.CurrentPage, @Model.PageSize, @Model.TotalItems);
 </script>
 
 
-===============================
-
-
-$(document).ready(function () {
-    // Select the header checkbox and row checkboxes
-    var headerCheckbox = $("#allItemCheck");
-    var rowCheckboxes = $(".check-item");
-
-    // When header checkbox is checked/unchecked
-    headerCheckbox.change(function () {
-        var isChecked = $(this).prop("checked");
-        rowCheckboxes.prop("checked", isChecked);
-    });
-
-    // When any row checkbox is checked/unchecked
-    rowCheckboxes.change(function () {
-        if ($(".check-item:checked").length === $(".check-item").length) {
-            headerCheckbox.prop("checked", true);
-        } else {
-            headerCheckbox.prop("checked", false);
-        }
-    });
-});
-
-
-===========================
-
-
-<th scope="col" width="3%">
-    <input class="form-check-input custom-border" type="checkbox" id="allItemCheck" />
-</th>
-
-<th scope="row">
-    <input class="form-check-input custom-border check-item" type="checkbox" data-id="@item.ItemId" />
-</th>
 
 
 
 
-<button type="button" id="deleteManyItemsBtn" disabled
-    class="bg-transparent p-0 px-2 rounded-1 blue-text fw-semibold"
-    style="border: 1px solid #2272ac"
-    data-bs-toggle="modal" data-bs-target="#deleteSelectedItemsModal">
-    <i class="bi bi-trash text-blue fs-5 text-opacity-75"></i>
-</button>
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using pizzaShop_DataAccess.Data;
+using pizzaShop_Models.Models;
+using pizzaShop_Models.ViewModel;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
+public class MenuController : Controller
+{
+    private readonly ApplicationDbContext _context;
 
-
-
-
-$(document).ready(function () {
-    let selectedItems = [];
-
-    // When any row checkbox is clicked
-    $(document).on("change", ".check-item", function () {
-        let itemId = $(this).data("id");
-
-        if ($(this).prop("checked")) {
-            selectedItems.push(itemId);
-        } else {
-            selectedItems = selectedItems.filter(id => id !== itemId);
-        }
-
-        toggleDeleteManyButton();
-    });
-
-    // When header checkbox is clicked
-    $("#allItemCheck").change(function () {
-        let isChecked = $(this).prop("checked");
-        $(".check-item").prop("checked", isChecked).trigger("change");
-    });
-
-    // Enable/disable "Delete Many Items" button
-    function toggleDeleteManyButton() {
-        $("#deleteManyItemsBtn").prop("disabled", selectedItems.length === 0);
+    public MenuController(ApplicationDbContext context)
+    {
+        _context = context;
     }
 
-    // Delete multiple items when clicking the button
-    $("#deleteManyItemsBtn").click(function () {
-        if (selectedItems.length === 0) return;
+    [HttpPost]
+    public async Task<IActionResult> AddItem([FromForm] AddItemViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return Json(new { success = false, message = "Invalid data provided" });
+        }
+
+        try
+        {
+            var item = new Item
+            {
+                Name = model.Name,
+                Description = model.Description,
+                Itemtype = model.ItemType,
+                Rate = model.Rate,
+                Quantity = model.Quantity,
+                CategoryId = model.CategoryId,
+                Isavailable = model.IsAvailable,
+                Defaulttax = model.DefaultTax,
+                Taxpercentage = model.TaxPercentage,
+                Shortcode = model.ShortCode,
+                UnitId = model.UnitId,
+                Createdat = DateTime.UtcNow,
+                Updatedat = DateTime.UtcNow
+            };
+
+            _context.Items.Add(item);
+            await _context.SaveChangesAsync();
+
+            // Save selected modifier groups in the Itemtomodifiergroup table
+            if (model.SelectedModifierGroups != null && model.SelectedModifierGroups.Any())
+            {
+                var itemModifierGroups = model.SelectedModifierGroups.Select(groupId => new Itemtomodifiergroup
+                {
+                    ItemId = item.ItemId,
+                    ModifiergroupId = groupId,
+                    Isdeleted = false
+                }).ToList();
+
+                _context.Itemtomodifiergroups.AddRange(itemModifierGroups);
+                await _context.SaveChangesAsync();
+            }
+
+            return Json(new { success = true, message = "Item added successfully!" });
+        }
+        catch (Exception ex)
+        {
+            return Json(new { success = false, message = "Error adding item: " + ex.Message });
+        }
+    }
+}
+
+
+
+
+
+
+
+public class ApplicationDbContext : DbContext
+{
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+
+    public DbSet<Item> Items { get; set; }
+    public DbSet<Modifiergroup> Modifiergroups { get; set; }
+    public DbSet<Itemtomodifiergroup> Itemtomodifiergroups { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Itemtomodifiergroup>()
+            .HasKey(im => im.ItemtogroupId);
+
+        modelBuilder.Entity<Itemtomodifiergroup>()
+            .HasOne(im => im.Item)
+            .WithMany(i => i.Itemtomodifiergroups)
+            .HasForeignKey(im => im.ItemId);
+
+        modelBuilder.Entity<Itemtomodifiergroup>()
+            .HasOne(im => im.Modifiergroup)
+            .WithMany(mg => mg.Itemtomodifiergroups)
+            .HasForeignKey(im => im.ModifiergroupId);
+    }
+}
+
+
+
+
+
+
+
+============================================
+
+
+
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Http;
+
+namespace pizzaShop_Models.ViewModel;
+
+public class UserViewModel
+{
+    public int? UserId { get; set; }
+
+    [Required(ErrorMessage = "First Name is required")]
+    public string? Firstname { get; set; }
+
+    [Required(ErrorMessage = "Last Name is required")]
+    public string? Lastname { get; set; }
+
+    [Required(ErrorMessage = "User name is required")]
+    public string? Username { get; set; }
+
+    [Required(ErrorMessage = "Email is required")]
+    [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
+        ErrorMessage = "Invalid email format")]
+    public string? Email { get; set; }
+
+    [Required(ErrorMessage = "Password is required")]
+    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@@$!%*?&])[A-Za-z\d@@$!%*?&]{8,}$",
+        ErrorMessage = "Password must be at least 8 characters long, contain 1 uppercase, 1 lowercase, 1 digit, and 1 special character.")]
+    [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
+    public string? Password { get; set; }
+
+    [Required(ErrorMessage = "Contact Number is required")]
+    [RegularExpression(@"^\+\d{1,3} \d{10}$",
+        ErrorMessage = "Contact number must start with '+', followed by country code (1-3 digits), a space, and a 10-digit number.")]
+    [MinLength(13, ErrorMessage = "Contact number must be at least 13 characters including country code.")]
+    [MaxLength(16, ErrorMessage = "Contact number cannot exceed 16 characters.")]
+    public string? Contactnumber { get; set; }
+
+    [Required(ErrorMessage = "Role is required")]
+    public string? Role { get; set; }
+
+    [Required(ErrorMessage = "Country is required")]
+    public string? Country { get; set; }
+
+    [Required(ErrorMessage = "State is required")]
+    public string? State { get; set; }
+
+    [Required(ErrorMessage = "City is required")]
+    public string? City { get; set; }
+
+    [Required(ErrorMessage = "Address is required")]
+    public string? Address { get; set; }
+
+    [Required(ErrorMessage = "Zip Code is required")]
+    [RegularExpression(@"^\d{5,6}$",
+            ErrorMessage = "Zip Code must be 5 or 6 digits")]
+    [MinLength(4, ErrorMessage = "Zip Code must be at least 4 digits.")]
+    [MaxLength(10, ErrorMessage = "Zip Code cannot exceed 10 digits.")]
+    public string? Zipcode { get; set; }
+
+    public string? Imageurl { get; set; }
+    public IFormFile? ProfileImage { get; set; }
+
+}
+
+
+
+
+
+
+
+
+public async Task<IActionResult> UserProfile([FromForm]UserViewModel model)
+    {
+        ModelState.Remove("Password");
+        ModelState.Remove("Country");
+        ModelState.Remove("State");
+        
+        if (!ModelState.IsValid) // ✅ Now ModelState.IsValid will be TRUE if only "Password" was invalid
+        {
+            var errors = ModelState
+            .Where(ms => ms.Value.Errors.Any())
+            .SelectMany(ms => ms.Value.Errors
+                .Select(e => $"{ms.Key}: {e.ErrorMessage}")
+            ).ToList();
+
+            // TempData["ToastMessage"] = string.Join("<br>", errors);
+            // TempData["ToastType"] = "error";
+            // TempData["ToastTitle"] = "Validation Error";
+
+            var message = "";
+            foreach (var error in errors)
+            {
+                message += error + ", ";
+            }
+
+            return BadRequest(new { success = false, type = "error", message = message });
+        }
+        if (model.ProfileImage != null)
+        {
+            var fileName = Path.GetFileNameWithoutExtension(model.ProfileImage.FileName);
+            var extension = Path.GetExtension(model.ProfileImage.FileName);
+            var uniqueFileName = $"{fileName}_{Guid.NewGuid()}{extension}";
+
+            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var fileStream = new FileStream(filePath, FileMode.Create))
+            {
+                model.ProfileImage.CopyTo(fileStream);
+            }
+
+            // Save the relative path to the model property
+            model.Imageurl = $"uploads/{uniqueFileName}";
+        }
+
+        if (model.Country != null)
+        {
+            string[] result = model.Country.Split('|');
+            model.Country = result[0];
+        }
+        if (model.State != null)
+        {
+            string[] result = model.State.Split('|');
+            model.State = result[0];
+        }
+        if (model.City != null)
+        {
+            string[] result = model.City.Split('|');
+            model.City = result[0];
+        }
+        Console.Write(model.Country);
+        Console.Write(model.State);
+        Console.Write(model.City);
+        bool response = await authService.UpdateUserAsync(model);
+        if (response == true)
+        {
+            return Ok(new { success = true, type = "success", message = "details update successfully!" });
+        }
+        return StatusCode(500, new { success = false, type = "error", message = "Updation failed due to an internal error." });
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+=======================================
+
+
+
+ $("#pageSizeDropDown").on("change", function(){
+            let categoryId = $("#selectedCategoryId").val() || $("#categoryDropdown").val();
+            loadCategoryItems(categoryId, 1);
+        })
+
+        var selectedItems = [];
+        $(document).on("change", "#allItemCheck", function () {
+            $(".check-item").prop("checked", this.checked).trigger("change");
+        });
+        $(document).on("change", ".check-item", function () {
+            var itemId = $(this).closest("tr").find("#deleteItemBtn").data("id");
+            console.log(itemId);
+
+            if (itemId !== undefined) {
+                if ($(this).prop("checked")) {
+                    if (!selectedItems.includes(itemId)) {
+                        selectedItems.push(itemId);
+                    }
+                } else {
+                    selectedItems = selectedItems.filter(id => id !== itemId);
+                }
+            }
+            $("#deleteManyItemsBtn").prop("disabled", selectedItems.length === 0);
+            $("#allItemCheck").prop("checked", $(".check-item:checked").length === $(".check-item").length);
+        });
+        $("#deleteManyItemsBtn").on("click", function () {
+            if (selectedItems.length === 0) {
+                showToast("No items selected!", "error", "Error");
+                return;
+            }
+            $("#deleteSelectedItemsModal").modal("show");
+        });
+        $("#confirmDeleteManyItemsBtn").on("click", function () {
+            console.log(selectedItems);
+        });
+
+
+
+
+
+
+===========================================
+
+
+
+
+<div class="col-sm-6 form-floating">
+                        <input id="firstName" type="text"
+                            class="form-control form-control-lg custom-border placeholder-text rounded-1 value-text"
+                            placeholder="First Name" asp-for=Firstname required />
+                        <label for="firstName">First Name</label>
+                        <span class="text-danger error-message"></span>
+                    </div>
+
+
+
+
+
+
+$("#updateBtn").click(function (e) {
+                debugger;
+                e.preventDefault();
+                let isValid = true;
+                $("#form input[required], #form select[required]").each(function () {
+                    let value = $(this).val().trim();
+                    let errorMsgSpan = $(this).siblings(".error-message");
+                    let field = $(this).siblings("label").text();
+
+                    if (value === "") {
+                        isValid = false;
+                        errorMsgSpan.text(`${field} is required`);
+                        $(this).addClass("border-danger");
+                    }
+                    else {
+                        errorMsgSpan.text("");
+                        $(this).removeClass("border-danger");
+                    }
+                });
+                if (isValid) {
+                    var formData = new FormData($("#form")[0]);
+                    let userId = parseInt($("#userId").val());
+                    @* formData.set("userId", Number(formData.get("userId"))); *@
+            const num = parseInt(formData.get("userId"), 10);
+                    console.log(typeof (num));
+                    console.log(typeof (formData.get("userId")));
+                    formData.delete("userId");
+                    formData.set("userId", num);
+
+                    $.ajax({
+                        url: "/Auth/UserProfile",
+                        type: "PUT",
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        success: function (response) {
+                                debugger;
+                                if (response.success == true) {
+                                    showToast(response.message, "success", "Success");
+                                }
+                                else {
+                                    showToast(response.message, "error", "");
+                                }
+                            },
+                            error: function (response) {
+                                showToast(response.message, "error", "");
+                            }
+                    });
+                }
+            })
+
+
+
+
+
+
+
+==============================================
+
+
+<div class="col-sm-12 mb-3">
+    <label for="modifierGroupDropdown" class="tab-text">Select Modifier Group(s)</label>
+    <select id="modifierGroupDropdown" name="modifierGroup"
+        class="form-select form-select custom-border placeholder-text gray-text text-black rounded-1 shadow-none"
+        aria-label="Large select example">
+        <option value="" disabled hidden selected>Select Modifier Group(s)</option>
+        @foreach (var modifierGroup in Model.ModifierGroups)
+        {
+            <option value="@modifierGroup.ModifiergroupId">@modifierGroup.Groupname</option>
+        }
+    </select>
+</div>
+
+<!-- Selected Modifier Groups -->
+<div id="selectedModifierGroups" class="mt-2">
+    <!-- Selected groups will be added here dynamically -->
+</div>
+
+<script>
+    let selectedModifierGroups = [];
+
+    $("#modifierGroupDropdown").change(function () {
+        let groupId = $(this).val();
+        let groupName = $("#modifierGroupDropdown option:selected").text();
+
+        if (!selectedModifierGroups.some(g => g.id === groupId)) {
+            $.ajax({
+                url: "/Menu/GetModifiersByGroup",
+                method: "GET",
+                data: { groupId: groupId },
+                success: function (response) {
+                    selectedModifierGroups.push({ id: groupId, name: groupName, modifiers: response });
+                    updateSelectedModifierGroups();
+                }
+            });
+        }
+    });
+
+    function updateSelectedModifierGroups() {
+        let container = $("#selectedModifierGroups");
+        container.empty();
+        selectedModifierGroups.forEach(group => {
+            let html = `<div class="border rounded p-2 mb-2">
+                            <strong>${group.name}</strong>
+                            <button type="button" class="btn btn-sm btn-danger float-end" onclick="removeModifierGroup(${group.id})">X</button>
+                            <ul>`;
+            group.modifiers.forEach(modifier => {
+                html += `<li>${modifier.name} (Rate: ${modifier.rate})</li>`;
+            });
+            html += `</ul></div>`;
+            container.append(html);
+        });
+    }
+
+    function removeModifierGroup(groupId) {
+        selectedModifierGroups = selectedModifierGroups.filter(g => g.id !== groupId);
+        updateSelectedModifierGroups();
+    }
+
+    function addItem() {
+        let formData = new FormData();
+        formData.append("Name", $("#itemName").val());
+        formData.append("CategoryId", $("#addItemCategoryDropdown").val());
+        formData.append("Rate", $("#rate").val());
+        formData.append("Quantity", $("#quantity").val());
+        formData.append("ItemType", $("#itemType").val());
+        formData.append("UnitId", $("#unitDropDown").val());
+        formData.append("IsAvailable", $("#isAvailable").prop("checked"));
+        formData.append("Shortcode", $("#shortCode").val());
+        formData.append("Description", $("#description").val());
+        formData.append("Imageurl", $("#imageUrl").val());
+        formData.append("ModifierGroupIds", selectedModifierGroups.map(g => g.id).join(",")); // Send Modifier Group IDs
 
         $.ajax({
-            url: "/Menu/DeleteManyItems",
+            url: "/Menu/AddItem",
             method: "POST",
-            data: { itemIds: selectedItems },
+            data: formData,
+            contentType: false,
+            processData: false,
             success: function (response) {
-                alert("Selected items deleted successfully!");
-                location.reload(); // Refresh the list
+                showToast("Item added successfully!", "success", "");
+                location.reload(); 
             },
             error: function (xhr, status, error) {
-                console.error("Error:", error);
+                showToast("Error adding item!", "error", "");
             }
         });
-    });
-});
-
-
-
-
-[HttpPost]
-public IActionResult DeleteManyItems([FromBody] List<int> itemIds)
-{
-    if (itemIds == null || !itemIds.Any())
-    {
-        return BadRequest(new { message = "No items selected for deletion." });
     }
-
-    var itemsToDelete = _context.Items.Where(i => itemIds.Contains(i.ItemId)).ToList();
-    
-    if (!itemsToDelete.Any())
-    {
-        return NotFound(new { message = "No matching items found." });
-    }
-
-    _context.Items.RemoveRange(itemsToDelete);
-    _context.SaveChanges();
-
-    return Ok(new { message = "Items deleted successfully." });
-}
-
-
-===========================
-
-
-function addItem() {
-    console.log("Clicked add");
-
-    var formData = new FormData();
-    formData.set("CategoryId", $("#addItemCategoryDropdown").val());
-    formData.set("Name", $("#itemName").val());
-    formData.set("ItemType", $("#itemType").val());
-    formData.set("Rate", $("#rate").val());
-    formData.set("Quantity", $("#quantity").val());
-    formData.set("Unit", $("#unitDropDown").val());
-    formData.set("IsAvailable", $("#isAvailable").prop("checked"));
-    formData.set("IsDefaultTax", $("#isDefaultTax").prop("checked"));
-    formData.set("TaxPercentage", $("#taxPercentage").val());
-    formData.set("ShortCode", $("#shortCode").val());
-    formData.set("Description", $("#description").val());
-    formData.set("Imageurl", $("#imageUrl").val());
-
-    var imageInput = $("#imageInput")[0];
-    if (imageInput.files.length > 0) {
-        formData.set("ProfileImage", imageInput.files[0]);
-    }
-
-    $.ajax({
-        url: "/Menu/AddItem",
-        method: "POST",
-        data: formData,
-        contentType: false,
-        processData: false,
-        success: function (response) {
-            if (response.success) {
-                // ✅ Close the modal
-                $("#addItemModal").modal("hide");
-
-                // ✅ Show success toast notification
-                showToast(response.message, "success", "");
-
-                // ✅ Load items for the selected category without full page reload
-                var categoryId = formData.get("CategoryId");
-                loadCategoryItems(categoryId, 1);
-            }
-        },
-        error: function (xhr) {
-            console.error("Error:", xhr.responseText);
-            showToast("Error adding item. Please try again.", "error", "");
-        }
-    });
-}
-
-
-
-
-====================================
-
-
-<!-- ✅ Add Modifier Group Modal -->
-<div class="modal fade text-black" id="addModifierGroupModal" data-bs-backdrop="static" tabindex="-1"
-    aria-labelledby="addModifierGroupLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title gray-text fw-bold fs-5 px-3">Add Modifier Group</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body d-flex flex-column">
-                <input id="modifierGroupName" type="text" class="form-control form-control-lg custom-border rounded-1 my-2"
-                    placeholder="Modifier Group Name" />
-                <textarea id="modifierGroupDescription" rows="2"
-                    class="form-control form-control-lg custom-border rounded-1 my-2"
-                    placeholder="Description"></textarea>
-
-                <!-- ✅ Open Select Modifiers Modal -->
-                <button data-bs-toggle="modal" data-bs-target="#selectModifiersModal"
-                    class="d-flex align-items-center gap-2 bg-transparent border-0 blue-text my-3">
-                    <i class="bi bi-plus-lg icons-link blue-text fw-bold fs-5"></i>
-                    <p class="mb-0">Add Existing Modifiers</p>
-                </button>
-
-                <!-- ✅ Selected Modifiers List -->
-                <div id="selectedModifiersContainer" class="mt-2"></div>
-
-                <div class="d-flex justify-content-end gap-2">
-                    <button type="button" onclick="saveModifierGroup()"
-                        class="pizza-bg p-2 px-4 border-0 rounded-1 text-white fw-semibold">
-                        Save
-                    </button>
-                    <button type="button" class="blue-text p-2 px-3 rounded-1 bg-transparent fw-semibold"
-                        data-bs-dismiss="modal" style="border: 1px solid #2272ac">
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ✅ Select Modifiers Modal -->
-<div class="modal fade" id="selectModifiersModal" aria-hidden="true" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Select Modifiers</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <ul id="modifierList" class="list-group">
-                    <!-- Modifiers will be loaded here dynamically -->
-                </ul>
-            </div>
-            <div class="modal-footer">
-                <button type="button" onclick="addSelectedModifiers()"
-                    class="btn btn-primary" data-bs-dismiss="modal">
-                    Add Selected Modifiers
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-
-
-
-
-
-
-let selectedModifiers = [];
-
-$(document).ready(function () {
-    // ✅ Load modifiers when opening the modal
-    $("#selectModifiersModal").on("show.bs.modal", function () {
-        $.ajax({
-            url: "/Modifier/GetModifiers",
-            method: "GET",
-            success: function (response) {
-                $("#modifierList").html("");
-                response.forEach(modifier => {
-                    $("#modifierList").append(`
-                        <li class="list-group-item">
-                            <input type="checkbox" class="modifier-checkbox" value="${modifier.modifierId}"> 
-                            ${modifier.name}
-                        </li>
-                    `);
-                });
-            }
-        });
-    });
-});
-
-// ✅ Add selected modifiers to the first modal
-function addSelectedModifiers() {
-    selectedModifiers = $(".modifier-checkbox:checked").map(function () {
-        return {
-            id: $(this).val(),
-            name: $(this).parent().text().trim()
-        };
-    }).get();
-
-    // Display selected modifiers in the first modal
-    $("#selectedModifiersContainer").html(
-        selectedModifiers.map(m => `<span class="badge bg-primary me-2">${m.name}</span>`).join("")
-    );
-}
-
-// ✅ Save Modifier Group and Associated Modifiers
-function saveModifierGroup() {
-    let formData = {
-        Groupname: $("#modifierGroupName").val().trim(),
-        Description: $("#modifierGroupDescription").val().trim(),
-        ModifierIds: selectedModifiers.map(m => m.id)
-    };
-
-    if (!formData.Groupname) {
-        alert("Modifier group name is required.");
-        return;
-    }
-
-    $.ajax({
-        url: "/Modifier/AddModifierGroup",
-        method: "POST",
-        contentType: "application/json",
-        data: JSON.stringify(formData),
-        success: function (response) {
-            alert("Modifier group added successfully!");
-            location.reload();
-        },
-        error: function (xhr) {
-            console.error("Error:", xhr.responseText);
-            alert("Failed to add modifier group.");
-        }
-    });
-}
-
-
-
-
+</script>
 
 
 
@@ -410,45 +655,68 @@ function saveModifierGroup() {
 
 
 [HttpGet]
-public IActionResult GetModifiers()
+public IActionResult GetModifiersByGroup(int groupId)
 {
-    var modifiers = _context.Modifiers
-        .Where(m => m.Isdeleted == false)
-        .Select(m => new { m.ModifierId, m.Name })
+    var modifiers = _context.Modifiertomodifiergroup
+        .Where(mg => mg.ModifiergroupId == groupId && mg.Isdeleted != true)
+        .Select(mg => new
+        {
+            mg.Modifier.ModifierId,
+            mg.Modifier.Modifiername,
+            mg.Modifier.Rate
+        })
         .ToList();
 
     return Json(modifiers);
 }
 
 [HttpPost]
-public IActionResult AddModifierGroup([FromBody] ModifierGroupViewModel model)
+public async Task<IActionResult> AddItem(AddItemViewModel model)
 {
-    if (string.IsNullOrEmpty(model.Groupname))
-        return BadRequest("Modifier group name is required.");
-
-    var modifierGroup = new Modifiergroup
+    if (!ModelState.IsValid)
     {
-        Groupname = model.Groupname,
-        Description = model.Description,
-        Createdat = DateTime.UtcNow
-    };
-
-    _context.Modifiergroups.Add(modifierGroup);
-    _context.SaveChanges();
-
-    if (model.ModifierIds != null && model.ModifierIds.Any())
-    {
-        var modifierMappings = model.ModifierIds.Select(modifierId => new Modifiertomodifiergroup
-        {
-            ModifiergroupId = modifierGroup.ModifiergroupId,
-            ModifierId = modifierId
-        }).ToList();
-
-        _context.Modifiertomodifiergroups.AddRange(modifierMappings);
-        _context.SaveChanges();
+        return BadRequest(new { error = true, message = "Validation failed", errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
     }
 
-    return Ok(new { message = "Modifier group added successfully!" });
+    var item = new Item
+    {
+        Name = model.Name,
+        Description = model.Description,
+        Itemtype = model.ItemType,
+        Rate = model.Rate,
+        Quantity = model.Quantity,
+        Isavailable = model.IsAvailable,
+        CategoryId = model.CategoryId,
+        UnitId = model.UnitId,
+        Defaulttax = model.DefaultTax,
+        Taxpercentage = model.TaxPercentage,
+        Shortcode = model.ShortCode,
+        Imageurl = model.Imageurl,
+        Createdat = DateTime.UtcNow,
+        Updatedat = DateTime.UtcNow,
+        Createdby = model.CreatedBy,
+        Updatedby = model.UpdatedBy
+    };
+
+    _context.Items.Add(item);
+    await _context.SaveChangesAsync();
+
+    if (!string.IsNullOrEmpty(model.ModifierGroupIds))
+    {
+        var modifierGroupIds = model.ModifierGroupIds.Split(',').Select(int.Parse).ToList();
+        foreach (var groupId in modifierGroupIds)
+        {
+            _context.Itemtomodifiergroups.Add(new Itemtomodifiergroup
+            {
+                ItemId = item.ItemId,
+                ModifiergroupId = groupId,
+                Isdeleted = false
+            });
+        }
+        await _context.SaveChangesAsync();
+    }
+
+    return Json(new { success = true, message = "Item added successfully!" });
 }
 
 
@@ -457,223 +725,122 @@ public IActionResult AddModifierGroup([FromBody] ModifierGroupViewModel model)
 
 
 
-
-public class ModifierGroupViewModel
+public class AddItemViewModel
 {
-    public string Groupname { get; set; }
-    public string? Description { get; set; }
-    public List<int>? ModifierIds { get; set; }
+    public string Name { get; set; }
+    public int CategoryId { get; set; }
+    public string ItemType { get; set; }
+    public decimal Rate { get; set; }
+    public int Quantity { get; set; }
+    public bool IsAvailable { get; set; }
+    public int UnitId { get; set; }
+    public bool DefaultTax { get; set; }
+    public decimal TaxPercentage { get; set; }
+    public string ShortCode { get; set; }
+    public string Imageurl { get; set; }
+    public string Description { get; set; }
+    public int CreatedBy { get; set; }
+    public int UpdatedBy { get; set; }
+    public string ModifierGroupIds { get; set; } // Stores selected Modifier Group IDs as CSV
 }
 
 
 
 
 
-------------------------------
-
-
-<div id="selectedModifiersContainer" class="mt-2 d-flex flex-wrap gap-2"></div>
 
 
 
-let selectedModifiers = [];
 
-$(document).ready(function () {
-    // ✅ Load modifiers dynamically when opening the modal
-    $("#selectModifiersModal").on("show.bs.modal", function () {
-        $.ajax({
-            url: "/Modifier/GetModifiers",
-            method: "GET",
-            success: function (response) {
-                $("#modifierList").html("");
-                response.forEach(modifier => {
-                    $("#modifierList").append(`
-                        <li class="list-group-item">
-                            <input type="checkbox" class="modifier-checkbox" value="${modifier.modifierId}"> 
-                            ${modifier.name}
-                        </li>
-                    `);
-                });
-            }
-        });
-    });
-});
-
-// ✅ Add selected modifiers to the first modal
-function addSelectedModifiers() {
-    selectedModifiers = $(".modifier-checkbox:checked").map(function () {
-        return {
-            id: $(this).val(),
-            name: $(this).parent().text().trim()
-        };
-    }).get();
-
-    displaySelectedModifiers();
+public class Itemtomodifiergroup
+{
+    public int ItemtogroupId { get; set; }
+    public int? ItemId { get; set; }
+    public int? ModifiergroupId { get; set; }
+    public bool? Isdeleted { get; set; }
+    public virtual Item? Item { get; set; }
+    public virtual Modifiergroup? Modifiergroup { get; set; }
 }
 
-// ✅ Display selected modifiers with remove (×) button
-function displaySelectedModifiers() {
-    $("#selectedModifiersContainer").html(
-        selectedModifiers.map(m => `
-            <span class="badge bg-primary p-2 d-flex align-items-center">
-                ${m.name}
-                <button type="button" class="btn-close ms-2 remove-modifier" data-id="${m.id}"></button>
-            </span>
-        `).join("")
-    );
-
-    // ✅ Attach remove event
-    $(".remove-modifier").click(function () {
-        let modifierId = $(this).data("id");
-        selectedModifiers = selectedModifiers.filter(m => m.id != modifierId);
-        displaySelectedModifiers();
-    });
-}
 
 
 
 =====================================
 
 
-let selectedModifierGroups = [];
 
-$(document).ready(function () {
-    // ✅ Load Modifier Groups when modal opens
-    $("#selectModifierGroupsModal").on("show.bs.modal", function () {
+
+<script>
+    updatePaginationButtons(@Model.CurrentPage, @Model.TotalPages);
+</script>
+
+
+
+
+<div class="d-flex align-items-center gap-2">
+    <p class="mb-0" id="paginationInfo"></p>
+    <div>
+        <button id="previousItemPage" type="button"
+            class="border shadow-sm rounded-1 p-1 px-2 bg-transparent"
+            onclick="changePage(-1)" disabled>
+            <i class="bi bi-chevron-left"></i>
+        </button>
+        <button id="nextItemPage" type="button"
+            class="border shadow-sm rounded-1 p-1 px-2 bg-transparent"
+            onclick="changePage(1)" disabled>
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    </div>
+</div>
+
+
+
+
+
+<script>
+    let currentPage = 1;
+    let totalPages = 1;
+
+    function updatePaginationButtons(page, total) {
+        currentPage = page;
+        totalPages = total;
+
+        $("#previousItemPage").prop("disabled", currentPage <= 1);
+        $("#nextItemPage").prop("disabled", currentPage >= totalPages);
+
+        $("#paginationInfo").text(`Showing ${((currentPage - 1) * $("#pageSizeDropDown").val()) + 1}-${Math.min(currentPage * $("#pageSizeDropDown").val(), total * $("#pageSizeDropDown").val())} of ${total * $("#pageSizeDropDown").val()}`);
+    }
+
+    function changePage(step) {
+        let newPage = currentPage + step;
+        if (newPage < 1 || newPage > totalPages) return;
+
+        loadItems(newPage);
+    }
+
+    function loadItems(page) {
+        let pageSize = $("#pageSizeDropDown").val();
+
         $.ajax({
-            url: "/Modifier/GetModifierGroups",
-            method: "GET",
+            url: "/Menu/GetItems",
+            type: "GET",
+            data: { page: page, pageSize: pageSize },
             success: function (response) {
-                $("#modifierGroupList").html("");
-                response.forEach(group => {
-                    $("#modifierGroupList").append(`
-                        <li class="list-group-item">
-                            <input type="checkbox" class="modifier-group-checkbox" value="${group.ModifiergroupId}">
-                            ${group.Groupname}
-                        </li>
-                    `);
-                });
+                $("#itemContainer").html(response);
+            },
+            error: function () {
+                showToast("Error loading items", "error", "Error");
             }
         });
-    });
-});
-
-// ✅ Add selected modifier groups to first modal
-function addSelectedModifierGroups() {
-    selectedModifierGroups = $(".modifier-group-checkbox:checked").map(function () {
-        return {
-            id: $(this).val(),
-            name: $(this).parent().text().trim()
-        };
-    }).get();
-
-    displaySelectedModifierGroups();
-}
-
-// ✅ Display selected modifier groups
-function displaySelectedModifierGroups() {
-    $("#selectedModifierGroupsContainer").html(
-        selectedModifierGroups.map(m => `
-            <span class="badge bg-primary p-2 d-flex align-items-center">
-                ${m.name}
-                <button type="button" class="btn-close ms-2 remove-modifier-group" data-id="${m.id}"></button>
-            </span>
-        `).join("")
-    );
-
-    // ✅ Remove modifier group when clicking cross
-    $(".remove-modifier-group").click(function () {
-        let groupId = $(this).data("id");
-        selectedModifierGroups = selectedModifierGroups.filter(m => m.id != groupId);
-        displaySelectedModifierGroups();
-    });
-}
-
-// ✅ Save Item with Selected Modifier Groups
-function addItem() {
-    let formData = {
-        Name: $("#itemName").val().trim(),
-        Description: $("#description").val().trim(),
-        ModifierGroupIds: selectedModifierGroups.map(m => m.id)
-    };
-
-    if (!formData.Name) {
-        alert("Item name is required.");
-        return;
     }
 
-    $.ajax({
-        url: "/Menu/AddItem",
-        method: "POST",
-        contentType: "application/json",
-        data: JSON.stringify(formData),
-        success: function (response) {
-            alert("Item added successfully!");
-            location.reload();
-        },
-        error: function (xhr) {
-            console.error("Error:", xhr.responseText);
-            alert("Failed to add item.");
-        }
+    $("#pageSizeDropDown").change(function () {
+        loadItems(1);
     });
-}
-
-
-
-
-
-[HttpGet]
-public IActionResult GetModifierGroups()
-{
-    var modifierGroups = _context.Modifiergroups
-        .Where(m => m.Isdeleted == false)
-        .Select(m => new { m.ModifiergroupId, m.Groupname })
-        .ToList();
-
-    return Json(modifierGroups);
-}
-
-[HttpPost]
-public IActionResult AddItem([FromBody] ItemViewModel model)
-{
-    if (string.IsNullOrEmpty(model.Name))
-        return BadRequest("Item name is required.");
-
-    // ✅ Create and save item
-    var item = new Item
-    {
-        Name = model.Name,
-        Description = model.Description,
-        Createdat = DateTime.UtcNow
-    };
-
-    _context.Items.Add(item);
-    _context.SaveChanges();
-
-    // ✅ Associate selected Modifier Groups with Item
-    if (model.ModifierGroupIds != null && model.ModifierGroupIds.Any())
-    {
-        var itemModifierGroups = model.ModifierGroupIds.Select(groupId => new Itemtomodifiergroup
-        {
-            ItemId = item.ItemId,
-            ModifiergroupId = groupId
-        }).ToList();
-
-        _context.Itemtomodifiergroups.AddRange(itemModifierGroups);
-        _context.SaveChanges();
-    }
-
-    return Ok(new { message = "Item added successfully!" });
-}
+</script>
 
 
 
 
 
 
-public class ItemViewModel
-{
-    public string Name { get; set; }
-    public string? Description { get; set; }
-    public List<int>? ModifierGroupIds { get; set; }
-}
