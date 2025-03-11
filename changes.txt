@@ -842,5 +842,421 @@ public class Itemtomodifiergroup
 
 
 
+==============================================================
+===============================================================
+===============================================================
+===============================================================
+===============================================================
+
+
+
+
+
+using Microsoft.EntityFrameworkCore;
+using pizzaShop_Models.Models;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+public class ModifierGroupRepository : IModifierGroupRepository
+{
+    private readonly ApplicationDbContext _context;
+
+    public ModifierGroupRepository(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<bool> UpdateModifierGroupAsync(int modifierGroupId, string name, string description, List<int> modifierIds)
+    {
+        var modifierGroup = await _context.Modifiergroups
+            .Include(mg => mg.Modifiertomodifiergroups)
+            .FirstOrDefaultAsync(mg => mg.ModifiergroupId == modifierGroupId);
+
+        if (modifierGroup == null)
+            return false;
+
+        // Update name and description
+        modifierGroup.Groupname = name;
+        modifierGroup.Description = description;
+        modifierGroup.Updatedat = DateTime.UtcNow;
+
+        // Get existing associated modifier IDs
+        var existingModifierIds = modifierGroup.Modifiertomodifiergroups
+            .Select(mg => mg.ModifierId)
+            .ToList();
+
+        // Determine modifiers to add
+        var modifiersToAdd = modifierIds.Except(existingModifierIds).ToList();
+        foreach (var modifierId in modifiersToAdd)
+        {
+            _context.Modifiertomodifiergroups.Add(new Modifiertomodifiergroup
+            {
+                ModifiergroupId = modifierGroupId,
+                ModifierId = modifierId,
+                Isdeleted = false
+            });
+        }
+
+        // Determine modifiers to remove
+        var modifiersToRemove = existingModifierIds.Except(modifierIds).ToList();
+        foreach (var modifierId in modifiersToRemove)
+        {
+            var mapping = await _context.Modifiertomodifiergroups
+                .FirstOrDefaultAsync(mg => mg.ModifiergroupId == modifierGroupId && mg.ModifierId == modifierId);
+            if (mapping != null)
+            {
+                _context.Modifiertomodifiergroups.Remove(mapping);
+            }
+        }
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+}
+
+
+============================
+
+
+
+using Microsoft.EntityFrameworkCore;
+using pizzaShop_Models.Models;
+using System.Linq;
+using System.Threading.Tasks;
+
+public class ModifierRepository : IModifierRepository
+{
+    private readonly ApplicationDbContext _context;
+
+    public ModifierRepository(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<bool> RemoveModifierFromGroupAsync(int modifierId, int modifierGroupId)
+    {
+        var mapping = await _context.Modifiertomodifiergroups
+            .FirstOrDefaultAsync(m => m.ModifierId == modifierId && m.ModifiergroupId == modifierGroupId);
+
+        if (mapping == null)
+            return false;
+
+        // Remove the relationship
+        _context.Modifiertomodifiergroups.Remove(mapping);
+        await _context.SaveChangesAsync();
+
+        // Check if the modifier is still associated with any group
+        bool hasOtherAssociations = await _context.Modifiertomodifiergroups
+            .AnyAsync(m => m.ModifierId == modifierId);
+
+        // If no other associations exist, delete the modifier itself
+        if (!hasOtherAssociations)
+        {
+            var modifier = await _context.Modifiers.FindAsync(modifierId);
+            if (modifier != null)
+            {
+                _context.Modifiers.Remove(modifier);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        return true;
+    }
+}
+
+
+
+
+========================================
+
+
+
+
+public async Task<bool> DeleteManyModifiersAsync(int[] modifierIds, int modifierGroupId)
+{
+    try
+    {
+        if (modifierIds == null || modifierIds.Length == 0)
+        {
+            return false;
+        }
+
+        // Get all mappings of the selected modifiers within the specified modifier group
+        var modifierMappings = _context.Modifiertomodifiergroups
+            .Where(m => modifierIds.Contains(m.ModifierId) && m.ModifiergroupId == modifierGroupId)
+            .ToList();
+
+        if (modifierMappings.Any())
+        {
+            // Remove relationships (modifier-to-modifier group)
+            _context.Modifiertomodifiergroups.RemoveRange(modifierMappings);
+            await _context.SaveChangesAsync();
+        }
+
+        // Check which modifiers have NO other associations left
+        var modifiersWithNoAssociations = _context.Modifiers
+            .Where(m => modifierIds.Contains(m.ModifierId) &&
+                        !_context.Modifiertomodifiergroups.Any(mm => mm.ModifierId == m.ModifierId))
+            .ToList();
+
+        if (modifiersWithNoAssociations.Any())
+        {
+            // Delete modifiers that have no associations left
+            _context.Modifiers.RemoveRange(modifiersWithNoAssociations);
+            await _context.SaveChangesAsync();
+        }
+
+        return true;
+    }
+    catch (Exception)
+    {
+        return false;
+    }
+}
+
+
+=====================================
+
+
+<div class="modal fade text-black" id="addUpdateItemModal" data-bs-backdrop="static" tabindex="-1"
+    aria-labelledby="addItemModal" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title gray-text fw-bold fs-5 px-3" id="modalTitle">
+                    Add New Menu Item
+                </h1>
+                <button id="closeItemModal" type="button" class="btn-close" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body row gx-2">
+                <input type="hidden" id="itemId" value="0" />
+                <div class="col-12 col-lg-8">
+                    <div class="row px-2">
+                        <div class="col-sm-6 form-floating mb-3">
+                            <select id="addItemCategoryDropdown" class="form-select form-select-lg custom-border">
+                                <option value="" disabled selected>Category</option>
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <option value="@category.CategoryId">@category.CategoryName</option>
+                                }
+                            </select>
+                            <label for="category">Category</label>
+                        </div>
+                        <div class="col-sm-6 form-floating mb-3">
+                            <input id="itemName" type="text" class="form-control form-control-lg custom-border"
+                                placeholder="Item Name" />
+                            <label for="itemName">Item Name</label>
+                        </div>
+                        <div class="col-sm-6 form-floating mb-3">
+                            <select id="modifierGroupDropdown" class="form-select custom-border">
+                                <option value="" disabled selected>Select Modifier Group</option>
+                                @foreach (var group in Model.ModifierGroups)
+                                {
+                                    <option value="@group.ModifiergroupId">@group.Groupname</option>
+                                }
+                            </select>
+                            <label for="modifierGroupDropdown">Modifier Groups</label>
+                        </div>
+
+                        <div id="selectedModifierGroups" class="col-12 mt-2">
+                            <!-- Selected groups will be displayed here -->
+                        </div>
+
+                        <div class="col-12">
+                            <button type="button" onclick="saveItem()"
+                                class="btn btn-primary p-2 px-4 border-0 rounded-1 fw-semibold">
+                                Save
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let selectedModifierGroups = [];
+
+        function openAddUpdateModal(item = null) {
+            $("#itemId").val(item ? item.ItemId : "0");
+            $("#itemName").val(item ? item.Name : "");
+            $("#addItemCategoryDropdown").val(item ? item.CategoryId : "");
+            $("#selectedModifierGroups").html("");
+            selectedModifierGroups = [];
+
+            if (item && item.ModifierGroups) {
+                item.ModifierGroups.forEach(group => {
+                    selectedModifierGroups.push(group.ModifiergroupId);
+                    $("#selectedModifierGroups").append(`
+                        <div class="d-flex align-items-center justify-content-between border p-2 rounded mt-2" id="modifierGroup_${group.ModifiergroupId}">
+                            <span>${group.Groupname}</span>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removeModifierGroup('${group.ModifiergroupId}')">
+                                Remove
+                            </button>
+                        </div>
+                    `);
+                    $("#modifierGroupDropdown option[value='" + group.ModifiergroupId + "']").prop("disabled", true);
+                });
+            }
+
+            $("#modalTitle").text(item ? "Update Menu Item" : "Add New Menu Item");
+            $("#addUpdateItemModal").modal("show");
+        }
+
+        $(document).ready(function () {
+            $("#modifierGroupDropdown").change(function () {
+                let selectedGroupId = $(this).val();
+                let selectedGroupName = $("#modifierGroupDropdown option:selected").text();
+                if (selectedGroupId && !selectedModifierGroups.includes(selectedGroupId)) {
+                    selectedModifierGroups.push(selectedGroupId);
+                    $("#selectedModifierGroups").append(`
+                        <div class="d-flex align-items-center justify-content-between border p-2 rounded mt-2" id="modifierGroup_${selectedGroupId}">
+                            <span>${selectedGroupName}</span>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="removeModifierGroup('${selectedGroupId}')">
+                                Remove
+                            </button>
+                        </div>
+                    `);
+                    $("#modifierGroupDropdown option[value='" + selectedGroupId + "']").prop("disabled", true);
+                }
+            });
+        });
+
+        function removeModifierGroup(groupId) {
+            selectedModifierGroups = selectedModifierGroups.filter(id => id !== groupId);
+            $("#modifierGroup_" + groupId).remove();
+            $("#modifierGroupDropdown option[value='" + groupId + "']").prop("disabled", false);
+        }
+
+        function saveItem() {
+            let itemId = $("#itemId").val();
+            let itemName = $("#itemName").val();
+            let categoryId = $("#addItemCategoryDropdown").val();
+
+            let formData = {
+                ItemId: itemId,
+                Name: itemName,
+                CategoryId: categoryId,
+                ModifierGroups: selectedModifierGroups
+            };
+
+            let url = itemId == "0" ? "/Menu/AddItem" : "/Menu/UpdateItem";
+            let method = itemId == "0" ? "POST" : "PUT";
+
+            $.ajax({
+                url: url,
+                method: method,
+                contentType: "application/json",
+                data: JSON.stringify(formData),
+                success: function (response) {
+                    if (response.success) {
+                        showToast(response.message, "success", "Success");
+                        $("#addUpdateItemModal").modal("hide");
+                    } else {
+                        showToast(response.message, "error", "Error");
+                    }
+                },
+                error: function (xhr) {
+                    showToast("Error while processing item.", "error", "Error");
+                }
+            });
+        }
+    </script>
+}
+
+
+
+
+
+[HttpPut]
+public async Task<IActionResult> UpdateItem([FromBody] AddItemViewModel model)
+{
+    if (!ModelState.IsValid)
+    {
+        return BadRequest(new { success = false, message = "Invalid data", errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
+    }
+
+    var existingItem = await _context.Items.Include(i => i.Itemtomodifiergroups)
+                                           .FirstOrDefaultAsync(i => i.ItemId == model.ItemId);
+
+    if (existingItem == null)
+    {
+        return NotFound(new { success = false, message = "Item not found" });
+    }
+
+    existingItem.Name = model.Name;
+    existingItem.CategoryId = model.CategoryId;
+    existingItem.Updatedat = DateTime.UtcNow;
+
+    var existingGroupIds = existingItem.Itemtomodifiergroups.Select(x => x.ModifiergroupId).ToList();
+
+    // Remove relations that are not in the updated list
+    var groupsToRemove = existingItem.Itemtomodifiergroups.Where(x => !model.ModifierGroups.Contains(x.ModifiergroupId)).ToList();
+    _context.Itemtomodifiergroups.RemoveRange(groupsToRemove);
+
+    // Add new relations
+    var groupsToAdd = model.ModifierGroups.Except(existingGroupIds).ToList();
+    foreach (var groupId in groupsToAdd)
+    {
+        _context.Itemtomodifiergroups.Add(new Itemtomodifiergroup
+        {
+            ItemId = existingItem.ItemId,
+            ModifiergroupId = groupId
+        });
+    }
+
+    await _context.SaveChangesAsync();
+    return Json(new { success = true, message = "Item updated successfully" });
+}
+
+
+
+
+
+
+
+
+public async Task<bool> UpdateItemAsync(AddItemViewModel model)
+{
+    var existingItem = await _context.Items.Include(i => i.Itemtomodifiergroups)
+                                           .FirstOrDefaultAsync(i => i.ItemId == model.ItemId);
+    if (existingItem == null) return false;
+
+    existingItem.Name = model.Name;
+    existingItem.CategoryId = model.CategoryId;
+    existingItem.Updatedat = DateTime.UtcNow;
+
+    // Manage Modifier Group Relations
+    _context.Itemtomodifiergroups.RemoveRange(existingItem.Itemtomodifiergroups);
+    foreach (var groupId in model.ModifierGroups)
+    {
+        _context.Itemtomodifiergroups.Add(new Itemtomodifiergroup
+        {
+            ItemId = existingItem.ItemId,
+            ModifiergroupId = groupId
+        });
+    }
+
+    await _context.SaveChangesAsync();
+    return true;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
