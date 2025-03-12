@@ -1249,7 +1249,279 @@ public async Task<bool> UpdateItemAsync(AddItemViewModel model)
 
 
 
+=========================================
 
+
+
+$("#addItemModifierGroupDropDown").change(function () {
+    let selectedModifierGroupId = $(this).val();
+    let selectedModifierGroupName = $("#addItemModifierGroupDropDown option:selected").text();
+    let selectedModifierGroup = $("#addItemModifierGroupDropDown option:selected").data("modifiers");
+
+    let minValue = 0;
+    let maxValue = selectedModifierGroup.length; // Total number of modifiers in group
+
+    let modifierList = `<ul class="mt-2" style="list-style-type:disc;">`;
+    for (var i = 0; i < selectedModifierGroup.length; i++) {
+        modifierList += `<li class="d-flex justify-content-between align-items-center p-0">
+                            <p>${selectedModifierGroup[i].Modifiername}</p>
+                            <p>${selectedModifierGroup[i].Rate}</p>
+                         </li>`;
+    }
+    modifierList += `</ul>`;
+
+    // Generate Min & Max Selection Dropdowns
+    let minDropdown = `<select class="form-select min-selection" id="minSelection-${selectedModifierGroupId}" 
+                        onchange="updateMaxDropdown('${selectedModifierGroupId}')">
+                        ${generateDropdownOptions(0, maxValue)}
+                       </select>`;
+
+    let maxDropdown = `<select class="form-select max-selection" id="maxSelection-${selectedModifierGroupId}">
+                        ${generateDropdownOptions(0, maxValue)}
+                       </select>`;
+
+    if (selectedModifierGroupId && !selectedModifierGroups.includes(selectedModifierGroupId)) {
+        selectedModifierGroups.push(selectedModifierGroupId);
+        $("#selectedModifierGroupsContainer").append(`
+            <div class="d-flex flex-column align-items-center justify-content-between p-2 border rounded mt-2" id="modifierGroup-${selectedModifierGroupId}">
+                <div class="d-flex align-items-center justify-content-between px-2 w-100">
+                    <span class="fs-5 gray-text">${selectedModifierGroupName}</span>
+                    <button type="button" class="border-0 bg-transparent" onclick="removeModifierGroup('${selectedModifierGroupId}')">
+                        <i class="bi bi-trash fs-5 text-secondary"></i>
+                    </button>
+                </div>
+                <div class="w-100">
+                    <span>${modifierList}</span>               
+                </div>
+                <div class="d-flex justify-content-between w-100 mt-2">
+                    <div class="d-flex flex-column">
+                        <label class="small">Min Selectable</label>
+                        ${minDropdown}
+                    </div>
+                    <div class="d-flex flex-column">
+                        <label class="small">Max Selectable</label>
+                        ${maxDropdown}
+                    </div>
+                </div>
+            </div>
+        `);
+        $("#addItemModifierGroupDropDown option[value='" + selectedModifierGroupId + "']").prop("disabled", true);
+    }
+});
+
+// Function to generate dropdown options dynamically
+function generateDropdownOptions(start, end) {
+    let options = "";
+    for (let i = start; i <= end; i++) {
+        options += `<option value="${i}">${i}</option>`;
+    }
+    return options;
+}
+
+// Function to update Max Selection Dropdown when Min is changed
+function updateMaxDropdown(groupId) {
+    let minSelectedValue = parseInt($(`#minSelection-${groupId}`).val());
+    let maxDropdown = $(`#maxSelection-${groupId}`);
+
+    // Regenerate max dropdown options starting from min value
+    maxDropdown.html(generateDropdownOptions(minSelectedValue, maxDropdown[0].length - 1));
+}
+
+// Function to remove selected Modifier Group
+function removeModifierGroup(groupId) {
+    selectedModifierGroups = selectedModifierGroups.filter(id => id !== groupId);
+    $(`#modifierGroup-${groupId}`).remove();
+    $("#addItemModifierGroupDropDown option[value='" + groupId + "']").prop("disabled", false);
+}
+
+
+
+=================================
+
+
+[Route("Menu")]
+public class MenuController : Controller
+{
+    private readonly IMenuService _menuService;
+
+    public MenuController(IMenuService menuService)
+    {
+        _menuService = menuService;
+    }
+
+    [HttpPost("AddItem")]
+    public async Task<IActionResult> AddItem([FromBody] AddItemViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return BadRequest(new { success = false, message = "Validation Error", errors });
+        }
+
+        var result = await _menuService.AddItemAsync(model);
+        return result ? Ok(new { success = true, message = "Item added successfully!" }) 
+                      : BadRequest(new { success = false, message = "Failed to add item." });
+    }
+
+    [HttpPost("UpdateItem")]
+    public async Task<IActionResult> UpdateItem([FromBody] UpdateItemViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            return BadRequest(new { success = false, message = "Validation Error", errors });
+        }
+
+        var result = await _menuService.UpdateItemAsync(model);
+        return result ? Ok(new { success = true, message = "Item updated successfully!" }) 
+                      : BadRequest(new { success = false, message = "Failed to update item." });
+    }
+}
+
+
+
+=================================
+
+
+
+public class MenuRepository : IMenuRepository
+{
+    private readonly ApplicationDbContext _context;
+
+    public MenuRepository(ApplicationDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<bool> AddItemAsync(AddItemViewModel model)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var item = new Item
+            {
+                Name = model.Name,
+                Description = model.Description,
+                Itemtype = model.ItemType,
+                Rate = model.Rate,
+                Quantity = model.Quantity,
+                Isavailable = model.IsAvailable,
+                CategoryId = model.CategoryId,
+                UnitId = model.UnitId,
+                Defaulttax = model.DefaultTax,
+                Taxpercentage = model.TaxPercentage,
+                Shortcode = model.ShortCode,
+                Imageurl = model.ImageUrl,
+                Createdat = DateTime.UtcNow,
+                Updatedat = DateTime.UtcNow,
+                Createdby = model.CreatedBy,
+                Updatedby = model.UpdatedBy
+            };
+
+            _context.Items.Add(item);
+            await _context.SaveChangesAsync();
+
+            if (model.SelectedModifierGroupIds != null && model.SelectedModifierGroupIds.Any())
+            {
+                foreach (var groupId in model.SelectedModifierGroupIds)
+                {
+                    var itemToModifierGroup = new Itemtomodifiergroup
+                    {
+                        ItemId = item.ItemId,
+                        ModifiergroupId = groupId,
+                        Isdeleted = false
+                    };
+                    _context.Itemtomodifiergroups.Add(itemToModifierGroup);
+                }
+                await _context.SaveChangesAsync();
+            }
+
+            await transaction.CommitAsync();
+            return true;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            return false;
+        }
+    }
+
+    public async Task<bool> UpdateItemAsync(UpdateItemViewModel model)
+    {
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var item = await _context.Items.FindAsync(model.ItemId);
+            if (item == null) return false;
+
+            item.Name = model.Name;
+            item.Description = model.Description;
+            item.Itemtype = model.ItemType;
+            item.Rate = model.Rate;
+            item.Quantity = model.Quantity;
+            item.Isavailable = model.IsAvailable;
+            item.CategoryId = model.CategoryId;
+            item.UnitId = model.UnitId;
+            item.Defaulttax = model.DefaultTax;
+            item.Taxpercentage = model.TaxPercentage;
+            item.Shortcode = model.ShortCode;
+            item.Imageurl = model.ImageUrl;
+            item.Updatedat = DateTime.UtcNow;
+            item.Updatedby = model.UpdatedBy;
+
+            await _context.SaveChangesAsync();
+
+            var existingRelations = _context.Itemtomodifiergroups
+                .Where(mg => mg.ItemId == model.ItemId)
+                .ToList();
+
+            var selectedModifierIds = model.SelectedModifierGroupIds ?? new List<int>();
+
+            var toRemove = existingRelations.Where(mg => !selectedModifierIds.Contains(mg.ModifiergroupId ?? 0)).ToList();
+            var toAdd = selectedModifierIds.Where(id => !existingRelations.Any(mg => mg.ModifiergroupId == id))
+                                           .Select(id => new Itemtomodifiergroup { ItemId = model.ItemId, ModifiergroupId = id, Isdeleted = false })
+                                           .ToList();
+
+            _context.Itemtomodifiergroups.RemoveRange(toRemove);
+            _context.Itemtomodifiergroups.AddRange(toAdd);
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            return true;
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            return false;
+        }
+    }
+}
+
+
+======================
+
+
+public class AddItemViewModel
+{
+    public string Name { get; set; }
+    public string? Description { get; set; }
+    public string? ItemType { get; set; }
+    public decimal? Rate { get; set; }
+    public int? Quantity { get; set; }
+    public bool? IsAvailable { get; set; }
+    public int CategoryId { get; set; }
+    public int? UnitId { get; set; }
+    public bool? DefaultTax { get; set; }
+    public decimal? TaxPercentage { get; set; }
+    public string? ShortCode { get; set; }
+    public string? ImageUrl { get; set; }
+    public int CreatedBy { get; set; }
+    public int UpdatedBy { get; set; }
+    public List<int>? SelectedModifierGroupIds { get; set; }
+}
 
 
 
