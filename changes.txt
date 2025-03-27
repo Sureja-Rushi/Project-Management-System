@@ -1,1250 +1,603 @@
- $("#confirmDeleteManyItemsBtn").on("click", function () {
-                console.log("Deleting items:", selectedItems); // Debugging output
+using Microsoft.AspNetCore.Mvc;
 
-                $.ajax({
-                    url: "/Menu/DeleteManyItems",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({ itemIds: selectedItems }),
-                    success: function (response) {
-                        if (response.success) {
-                            showToast("Items deleted successfully!", "success", "Success");
-
-                            // Remove deleted items from the table without refreshing the page
-                            selectedItems.forEach(id => {
-                                $(`button[data-id="${id}"]`).closest("tr").remove();
-                            });
-
-                            selectedItems = [];
-                            $("#deleteManyItemsBtn").prop("disabled", true);
-                            $("#allItemCheck").prop("checked", false);
-                        } else {
-                            showToast("Failed to delete items!", "error", "Error");
-                        }
-
-                        $("#deleteSelectedItemsModal").modal("hide");
-                    },
-                    error: function () {
-                        showToast("An error occurred!", "error", "Error");
-                        $("#deleteSelectedItemsModal").modal("hide");
-                    }
-                });
-            });
-
-
-
-
-
-
-========================================
-
-
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Http;
-
-namespace pizzaShop_Models.ViewModel
+namespace pizzaShop.Controllers
 {
-    public class AddItemViewModel
+    public class HomeController : Controller
     {
-        public int ItemId { get; set; }
-
-        [Required(ErrorMessage = "Name is required")]
-        public string Name { get; set; } = null!;
-
-        public string? Description { get; set; }
-
-        [Required(ErrorMessage = "Item Type is required")]
-        public string ItemType { get; set; } = null!;
-
-        [Required]
-        public decimal Rate { get; set; }
-
-        [Required]
-        public int Quantity { get; set; }
-
-        [Required]
-        public int CategoryId { get; set; }
-
-        public bool IsAvailable { get; set; } = true;
-        public bool DefaultTax { get; set; } = false;
-        public decimal? TaxPercentage { get; set; }
-        public string? ShortCode { get; set; }
-        public string? ImageUrl { get; set; }
-
-        public IFormFile? ProfileImage { get; set; }
-        public int UnitId { get; set; }
-
-        // Store selected modifier groups as a list
-        public List<int> SelectedModifierGroups { get; set; } = new List<int>();
+        [Route("AccessDenied")]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
     }
 }
 
 
 
 
+/Views/Home/AccessDenied.cshtml
 
-<div class="col-sm-12 mb-3">
-    <label for="modifierGroupsDropdown" class="tab-text">Select Modifier Group(s)</label>
-    <select id="modifierGroupsDropdown" class="form-select custom-border text-black rounded-1 shadow-none">
-        <option value="" disabled hidden selected>Select Modifier Group</option>
-        @foreach (var group in Model.ModifierGroups)
-        {
-            <option value="@group.ModifiergroupId">@group.Groupname</option>
-        }
-    </select>
+
+
+@{
+    ViewData["Title"] = "Access Denied";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container text-center mt-5">
+    <div class="card shadow-lg p-5">
+        <h2 class="text-danger mb-4"><i class="bi bi-exclamation-triangle"></i> Access Denied</h2>
+        <p class="lead">You do not have permission to access this page.</p>
+        <a href="@Url.Action("Index", "Home")" class="btn btn-primary mt-3">Return to Home</a>
+    </div>
 </div>
 
-<div id="selectedModifierGroupsContainer" class="border p-2 rounded bg-light">
-    <p class="fw-semibold">Selected Modifier Groups:</p>
-    <div id="selectedModifierGroups"></div>
-</div>
-
-<script>
-    let selectedModifierGroups = [];
-
-    $("#modifierGroupsDropdown").change(function () {
-        let groupId = $(this).val();
-        let groupName = $("#modifierGroupsDropdown option:selected").text();
-
-        if (!selectedModifierGroups.includes(groupId)) {
-            selectedModifierGroups.push(groupId);
-            $("#selectedModifierGroups").append(
-                `<div class="selected-group d-flex align-items-center justify-content-between p-2 bg-white border rounded mb-2">
-                    <span>${groupName}</span>
-                    <button type="button" class="btn btn-danger btn-sm remove-group" data-id="${groupId}">X</button>
-                </div>`
-            );
-        }
-    });
-
-    $(document).on("click", ".remove-group", function () {
-        let groupId = $(this).data("id");
-        selectedModifierGroups = selectedModifierGroups.filter(id => id != groupId);
-        $(this).parent().remove();
-    });
-
-    function addItem() {
-        let formData = new FormData();
-        formData.set("Name", $("#itemName").val());
-        formData.set("ItemType", $("#itemType").val());
-        formData.set("Rate", $("#rate").val());
-        formData.set("Quantity", $("#quantity").val());
-        formData.set("CategoryId", $("#addItemCategoryDropdown").val());
-        formData.set("UnitId", $("#unitDropDown").val());
-        formData.set("ShortCode", $("#shortCode").val());
-        formData.set("Description", $("#description").val());
-        formData.set("IsAvailable", $("#isAvailable").prop("checked"));
-        formData.set("DefaultTax", $("#isDefaultTax").prop("checked"));
-        formData.set("TaxPercentage", $("#taxPercentage").val());
-        
-        // Convert selected modifier groups to JSON
-        formData.set("SelectedModifierGroups", JSON.stringify(selectedModifierGroups));
-
-        let imageInput = $("#imageInput")[0];
-        if (imageInput.files.length > 0) {
-            formData.set("ProfileImage", imageInput.files[0]);
-        }
-
-        $.ajax({
-            url: "/Menu/AddItem",
-            method: "POST",
-            data: formData,
-            contentType: false,
-            processData: false,
-            success: function (response) {
-                if (response.success) {
-                    showToast("Item added successfully!", "success", "Success");
-                    window.location.reload();
-                } else {
-                    showToast(response.message, "error", "Error");
-                }
-            },
-            error: function (xhr) {
-                showToast("Error adding item", "error", "Error");
-            }
-        });
+<style>
+    .card {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
     }
-</script>
 
+    .card h2 {
+        font-size: 2rem;
+    }
+
+    .lead {
+        font-size: 1.2rem;
+    }
+</style>
+
+
+
+
+public async Task Invoke(HttpContext context)
+{
+    var token = context.Request.Cookies["AuthToken"];
+    if (!string.IsNullOrEmpty(token))
+    {
+        context.Request.Headers.Add("Authorization", "Bearer " + token);
+    }
+    else
+    {
+        var endpoint = context.GetEndpoint();
+        var hasAuthorizeAttribute = endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>() != null;
+
+        if (hasAuthorizeAttribute)
+        {
+            // Redirect to Access Denied Page if JWT token is missing
+            context.Response.Redirect("/AccessDenied");
+            return;
+        }
+    }
+
+    await _next(context);
+}
+
+
+
+protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
+{
+    var httpContext = httpContextAccessor.HttpContext;
+    if (httpContext == null || httpContext.User == null)
+    {
+        context.Fail();
+        httpContext.Response.Redirect("/AccessDenied");
+        return;
+    }
+
+    var endpoint = httpContext.GetEndpoint();
+    var hasAuthorizeAttribute = endpoint?.Metadata.GetMetadata<AuthorizeAttribute>() != null;
+
+    if (!hasAuthorizeAttribute)
+    {
+        context.Succeed(requirement);
+        return;
+    }
+
+    var user = httpContext.User;
+
+    if (await permissionRepository.HasPermissionAsync(user, requirement.PermissionField, requirement.PermissionType))
+    {
+        context.Succeed(requirement);
+    }
+    else
+    {
+        context.Fail();
+        httpContext.Response.Redirect("/AccessDenied");
+    }
+}
+
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+var app = builder.Build();
+
+// Use JWT Middleware
+app.UseMiddleware<JwtMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Map routes
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.Run();
+
+
+======================================================
+
+
+
+
+
+public async Task Invoke(HttpContext context)
+{
+    var token = context.Request.Cookies["AuthToken"];
+    var endpoint = context.GetEndpoint();
+    var hasAuthorizeAttribute = endpoint?.Metadata.GetMetadata<Microsoft.AspNetCore.Authorization.AuthorizeAttribute>() != null;
+
+    if (!string.IsNullOrEmpty(token))
+    {
+        // Add token to the Authorization header
+        context.Request.Headers.Add("Authorization", "Bearer " + token);
+    }
+    else if (hasAuthorizeAttribute)
+    {
+        // If JWT token is missing and access is protected, redirect to Login page
+        context.Response.Redirect("/Account/Login");
+        return;
+    }
+
+    await _next(context);
+}
+
+
+
+
+
+
+
+
+
+protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
+{
+    var httpContext = httpContextAccessor.HttpContext;
+    if (httpContext == null || httpContext.User == null)
+    {
+        context.Fail();
+        return;
+    }
+
+    var endpoint = httpContext.GetEndpoint();
+    var hasAuthorizeAttribute = endpoint?.Metadata.GetMetadata<AuthorizeAttribute>() != null;
+
+    // If no [Authorize] attribute, skip permission check
+    if (!hasAuthorizeAttribute)
+    {
+        context.Succeed(requirement);
+        return;
+    }
+
+    var user = httpContext.User;
+
+    // Check if the user has required permission
+    if (await permissionRepository.HasPermissionAsync(user, requirement.PermissionField, requirement.PermissionType))
+    {
+        context.Succeed(requirement);
+    }
+    else
+    {
+        context.Fail();
+
+        // Redirect to Access Denied if permission is missing
+        httpContext.Response.Redirect("/AccessDenied");
+    }
+}
+
+
+/Views/Account/Login.cshtml
+
+
+
+@{
+    ViewData["Title"] = "Login";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container text-center mt-5">
+    <div class="card shadow-lg p-5">
+        <h2 class="text-primary mb-4"><i class="bi bi-person-circle"></i> Please Login</h2>
+        <form method="post" asp-action="Login" asp-controller="Account">
+            <div class="mb-3">
+                <input type="text" name="Username" class="form-control" placeholder="Username" required />
+            </div>
+            <div class="mb-3">
+                <input type="password" name="Password" class="form-control" placeholder="Password" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
+        </form>
+    </div>
+</div>
+
+<style>
+    .card {
+        background-color: #e9f7f9;
+        border-color: #d4e6f1;
+    }
+
+    .card h2 {
+        font-size: 2rem;
+    }
+</style>
+
+
+
+
+/Views/Home/AccessDenied.cshtml
+
+
+
+
+@{
+    ViewData["Title"] = "Access Denied";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container text-center mt-5">
+    <div class="card shadow-lg p-5">
+        <h2 class="text-danger mb-4"><i class="bi bi-exclamation-triangle"></i> Access Denied</h2>
+        <p class="lead">You do not have permission to access this page.</p>
+        <a href="@Url.Action("Index", "Home")" class="btn btn-primary mt-3">Return to Home</a>
+    </div>
+</div>
+
+<style>
+    .card {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+
+    .card h2 {
+        font-size: 2rem;
+    }
+</style>
 
 
 
 
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using pizzaShop_DataAccess.Data;
-using pizzaShop_Models.Models;
-using pizzaShop_Models.ViewModel;
-using System;
-using System.Linq;
+
+namespace pizzaShop.Controllers
+{
+    public class HomeController : Controller
+    {
+        [Route("AccessDenied")]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+    }
+}
+
+
+
+
+using Microsoft.AspNetCore.Mvc;
+
+namespace pizzaShop.Controllers
+{
+    public class AccountController : Controller
+    {
+        [HttpGet]
+        [Route("Account/Login")]
+        public IActionResult Login()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [Route("Account/Login")]
+        public IActionResult Login(string username, string password)
+        {
+            if (username == "admin" && password == "password") // Dummy check
+            {
+                // Set token in cookie or session (replace with actual logic)
+                Response.Cookies.Append("AuthToken", "sample-jwt-token");
+                return RedirectToAction("Index", "Home");
+            }
+
+            ViewBag.ErrorMessage = "Invalid credentials. Please try again.";
+            return View();
+        }
+    }
+}
+
+
+
+
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IPermissionRepository, PermissionRepository>();
+builder.Services.AddSingleton<IAuthorizationPolicyProvider, PermissionPolicyProvider>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+
+var app = builder.Build();
+
+// Use JWT Middleware
+app.UseMiddleware<JwtMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Map routes
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.Run();
+
+
+
+===================================================
+
+
+Install-Package DinkToPdf
+
+
+
+using DinkToPdf;
+using DinkToPdf.Contracts;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+
+// Configure DinkToPdf
+builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
+
+var app = builder.Build();
+
+// Middleware
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.Run();
+
+
+
+
+
+using DinkToPdf;
+using DinkToPdf.Contracts;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using System.Text;
 using System.Threading.Tasks;
 
-public class MenuController : Controller
+namespace pizzaShop_Services.PdfService
 {
-    private readonly ApplicationDbContext _context;
-
-    public MenuController(ApplicationDbContext context)
+    public class OrderPdfService
     {
-        _context = context;
-    }
+        private readonly IConverter _converter;
+        private readonly ICompositeViewEngine _viewEngine;
+        private readonly IServiceProvider _serviceProvider;
 
-    [HttpPost]
-    public async Task<IActionResult> AddItem([FromForm] AddItemViewModel model)
-    {
-        if (!ModelState.IsValid)
+        public OrderPdfService(IConverter converter, ICompositeViewEngine viewEngine, IServiceProvider serviceProvider)
         {
-            return Json(new { success = false, message = "Invalid data provided" });
+            _converter = converter;
+            _viewEngine = viewEngine;
+            _serviceProvider = serviceProvider;
         }
 
-        try
+        // Generate PDF from View
+        public async Task<byte[]> GenerateOrderPdfAsync<TModel>(string viewName, TModel model)
         {
-            var item = new Item
+            var htmlContent = await RenderViewToStringAsync(viewName, model);
+            var pdfDocument = new HtmlToPdfDocument()
             {
-                Name = model.Name,
-                Description = model.Description,
-                Itemtype = model.ItemType,
-                Rate = model.Rate,
-                Quantity = model.Quantity,
-                CategoryId = model.CategoryId,
-                Isavailable = model.IsAvailable,
-                Defaulttax = model.DefaultTax,
-                Taxpercentage = model.TaxPercentage,
-                Shortcode = model.ShortCode,
-                UnitId = model.UnitId,
-                Createdat = DateTime.UtcNow,
-                Updatedat = DateTime.UtcNow
-            };
-
-            _context.Items.Add(item);
-            await _context.SaveChangesAsync();
-
-            // Save selected modifier groups in the Itemtomodifiergroup table
-            if (model.SelectedModifierGroups != null && model.SelectedModifierGroups.Any())
-            {
-                var itemModifierGroups = model.SelectedModifierGroups.Select(groupId => new Itemtomodifiergroup
-                {
-                    ItemId = item.ItemId,
-                    ModifiergroupId = groupId,
-                    Isdeleted = false
-                }).ToList();
-
-                _context.Itemtomodifiergroups.AddRange(itemModifierGroups);
-                await _context.SaveChangesAsync();
-            }
-
-            return Json(new { success = true, message = "Item added successfully!" });
-        }
-        catch (Exception ex)
-        {
-            return Json(new { success = false, message = "Error adding item: " + ex.Message });
-        }
-    }
-}
-
-
-
-
-
-
-
-public class ApplicationDbContext : DbContext
-{
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
-
-    public DbSet<Item> Items { get; set; }
-    public DbSet<Modifiergroup> Modifiergroups { get; set; }
-    public DbSet<Itemtomodifiergroup> Itemtomodifiergroups { get; set; }
-
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        modelBuilder.Entity<Itemtomodifiergroup>()
-            .HasKey(im => im.ItemtogroupId);
-
-        modelBuilder.Entity<Itemtomodifiergroup>()
-            .HasOne(im => im.Item)
-            .WithMany(i => i.Itemtomodifiergroups)
-            .HasForeignKey(im => im.ItemId);
-
-        modelBuilder.Entity<Itemtomodifiergroup>()
-            .HasOne(im => im.Modifiergroup)
-            .WithMany(mg => mg.Itemtomodifiergroups)
-            .HasForeignKey(im => im.ModifiergroupId);
-    }
-}
-
-
-
-
-
-
-
-============================================
-
-
-
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.AspNetCore.Http;
-
-namespace pizzaShop_Models.ViewModel;
-
-public class UserViewModel
-{
-    public int? UserId { get; set; }
-
-    [Required(ErrorMessage = "First Name is required")]
-    public string? Firstname { get; set; }
-
-    [Required(ErrorMessage = "Last Name is required")]
-    public string? Lastname { get; set; }
-
-    [Required(ErrorMessage = "User name is required")]
-    public string? Username { get; set; }
-
-    [Required(ErrorMessage = "Email is required")]
-    [RegularExpression(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-        ErrorMessage = "Invalid email format")]
-    public string? Email { get; set; }
-
-    [Required(ErrorMessage = "Password is required")]
-    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@@$!%*?&])[A-Za-z\d@@$!%*?&]{8,}$",
-        ErrorMessage = "Password must be at least 8 characters long, contain 1 uppercase, 1 lowercase, 1 digit, and 1 special character.")]
-    [MinLength(8, ErrorMessage = "Password must be at least 8 characters")]
-    public string? Password { get; set; }
-
-    [Required(ErrorMessage = "Contact Number is required")]
-    [RegularExpression(@"^\+\d{1,3} \d{10}$",
-        ErrorMessage = "Contact number must start with '+', followed by country code (1-3 digits), a space, and a 10-digit number.")]
-    [MinLength(13, ErrorMessage = "Contact number must be at least 13 characters including country code.")]
-    [MaxLength(16, ErrorMessage = "Contact number cannot exceed 16 characters.")]
-    public string? Contactnumber { get; set; }
-
-    [Required(ErrorMessage = "Role is required")]
-    public string? Role { get; set; }
-
-    [Required(ErrorMessage = "Country is required")]
-    public string? Country { get; set; }
-
-    [Required(ErrorMessage = "State is required")]
-    public string? State { get; set; }
-
-    [Required(ErrorMessage = "City is required")]
-    public string? City { get; set; }
-
-    [Required(ErrorMessage = "Address is required")]
-    public string? Address { get; set; }
-
-    [Required(ErrorMessage = "Zip Code is required")]
-    [RegularExpression(@"^\d{5,6}$",
-            ErrorMessage = "Zip Code must be 5 or 6 digits")]
-    [MinLength(4, ErrorMessage = "Zip Code must be at least 4 digits.")]
-    [MaxLength(10, ErrorMessage = "Zip Code cannot exceed 10 digits.")]
-    public string? Zipcode { get; set; }
-
-    public string? Imageurl { get; set; }
-    public IFormFile? ProfileImage { get; set; }
-
-}
-
-
-
-
-
-
-
-
-public async Task<IActionResult> UserProfile([FromForm]UserViewModel model)
-    {
-        ModelState.Remove("Password");
-        ModelState.Remove("Country");
-        ModelState.Remove("State");
-        
-        if (!ModelState.IsValid) // ✅ Now ModelState.IsValid will be TRUE if only "Password" was invalid
-        {
-            var errors = ModelState
-            .Where(ms => ms.Value.Errors.Any())
-            .SelectMany(ms => ms.Value.Errors
-                .Select(e => $"{ms.Key}: {e.ErrorMessage}")
-            ).ToList();
-
-            // TempData["ToastMessage"] = string.Join("<br>", errors);
-            // TempData["ToastType"] = "error";
-            // TempData["ToastTitle"] = "Validation Error";
-
-            var message = "";
-            foreach (var error in errors)
-            {
-                message += error + ", ";
-            }
-
-            return BadRequest(new { success = false, type = "error", message = message });
-        }
-        if (model.ProfileImage != null)
-        {
-            var fileName = Path.GetFileNameWithoutExtension(model.ProfileImage.FileName);
-            var extension = Path.GetExtension(model.ProfileImage.FileName);
-            var uniqueFileName = $"{fileName}_{Guid.NewGuid()}{extension}";
-
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/uploads");
-            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-            using (var fileStream = new FileStream(filePath, FileMode.Create))
-            {
-                model.ProfileImage.CopyTo(fileStream);
-            }
-
-            // Save the relative path to the model property
-            model.Imageurl = $"uploads/{uniqueFileName}";
-        }
-
-        if (model.Country != null)
-        {
-            string[] result = model.Country.Split('|');
-            model.Country = result[0];
-        }
-        if (model.State != null)
-        {
-            string[] result = model.State.Split('|');
-            model.State = result[0];
-        }
-        if (model.City != null)
-        {
-            string[] result = model.City.Split('|');
-            model.City = result[0];
-        }
-        Console.Write(model.Country);
-        Console.Write(model.State);
-        Console.Write(model.City);
-        bool response = await authService.UpdateUserAsync(model);
-        if (response == true)
-        {
-            return Ok(new { success = true, type = "success", message = "details update successfully!" });
-        }
-        return StatusCode(500, new { success = false, type = "error", message = "Updation failed due to an internal error." });
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-=======================================
-
-
-
- $("#pageSizeDropDown").on("change", function(){
-            let categoryId = $("#selectedCategoryId").val() || $("#categoryDropdown").val();
-            loadCategoryItems(categoryId, 1);
-        })
-
-        var selectedItems = [];
-        $(document).on("change", "#allItemCheck", function () {
-            $(".check-item").prop("checked", this.checked).trigger("change");
-        });
-        $(document).on("change", ".check-item", function () {
-            var itemId = $(this).closest("tr").find("#deleteItemBtn").data("id");
-            console.log(itemId);
-
-            if (itemId !== undefined) {
-                if ($(this).prop("checked")) {
-                    if (!selectedItems.includes(itemId)) {
-                        selectedItems.push(itemId);
-                    }
-                } else {
-                    selectedItems = selectedItems.filter(id => id !== itemId);
-                }
-            }
-            $("#deleteManyItemsBtn").prop("disabled", selectedItems.length === 0);
-            $("#allItemCheck").prop("checked", $(".check-item:checked").length === $(".check-item").length);
-        });
-        $("#deleteManyItemsBtn").on("click", function () {
-            if (selectedItems.length === 0) {
-                showToast("No items selected!", "error", "Error");
-                return;
-            }
-            $("#deleteSelectedItemsModal").modal("show");
-        });
-        $("#confirmDeleteManyItemsBtn").on("click", function () {
-            console.log(selectedItems);
-        });
-
-
-
-
-
-
-===========================================
-
-
-
-
-<div class="col-sm-6 form-floating">
-                        <input id="firstName" type="text"
-                            class="form-control form-control-lg custom-border placeholder-text rounded-1 value-text"
-                            placeholder="First Name" asp-for=Firstname required />
-                        <label for="firstName">First Name</label>
-                        <span class="text-danger error-message"></span>
-                    </div>
-
-
-
-
-
-
-$("#updateBtn").click(function (e) {
-                debugger;
-                e.preventDefault();
-                let isValid = true;
-                $("#form input[required], #form select[required]").each(function () {
-                    let value = $(this).val().trim();
-                    let errorMsgSpan = $(this).siblings(".error-message");
-                    let field = $(this).siblings("label").text();
-
-                    if (value === "") {
-                        isValid = false;
-                        errorMsgSpan.text(`${field} is required`);
-                        $(this).addClass("border-danger");
-                    }
-                    else {
-                        errorMsgSpan.text("");
-                        $(this).removeClass("border-danger");
-                    }
-                });
-                if (isValid) {
-                    var formData = new FormData($("#form")[0]);
-                    let userId = parseInt($("#userId").val());
-                    @* formData.set("userId", Number(formData.get("userId"))); *@
-            const num = parseInt(formData.get("userId"), 10);
-                    console.log(typeof (num));
-                    console.log(typeof (formData.get("userId")));
-                    formData.delete("userId");
-                    formData.set("userId", num);
-
-                    $.ajax({
-                        url: "/Auth/UserProfile",
-                        type: "PUT",
-                        data: formData,
-                        contentType: false,
-                        processData: false,
-                        success: function (response) {
-                                debugger;
-                                if (response.success == true) {
-                                    showToast(response.message, "success", "Success");
-                                }
-                                else {
-                                    showToast(response.message, "error", "");
-                                }
-                            },
-                            error: function (response) {
-                                showToast(response.message, "error", "");
-                            }
-                    });
-                }
-            })
-
-
-
-
-
-
-
-==============================================
-
-
-<div class="col-sm-12 mb-3">
-    <label for="modifierGroupDropdown" class="tab-text">Select Modifier Group(s)</label>
-    <select id="modifierGroupDropdown" name="modifierGroup"
-        class="form-select form-select custom-border placeholder-text gray-text text-black rounded-1 shadow-none"
-        aria-label="Large select example">
-        <option value="" disabled hidden selected>Select Modifier Group(s)</option>
-        @foreach (var modifierGroup in Model.ModifierGroups)
-        {
-            <option value="@modifierGroup.ModifiergroupId">@modifierGroup.Groupname</option>
-        }
-    </select>
-</div>
-
-<!-- Selected Modifier Groups -->
-<div id="selectedModifierGroups" class="mt-2">
-    <!-- Selected groups will be added here dynamically -->
-</div>
-
-<script>
-    let selectedModifierGroups = [];
-
-    $("#modifierGroupDropdown").change(function () {
-        let groupId = $(this).val();
-        let groupName = $("#modifierGroupDropdown option:selected").text();
-
-        if (!selectedModifierGroups.some(g => g.id === groupId)) {
-            $.ajax({
-                url: "/Menu/GetModifiersByGroup",
-                method: "GET",
-                data: { groupId: groupId },
-                success: function (response) {
-                    selectedModifierGroups.push({ id: groupId, name: groupName, modifiers: response });
-                    updateSelectedModifierGroups();
-                }
-            });
-        }
-    });
-
-    function updateSelectedModifierGroups() {
-        let container = $("#selectedModifierGroups");
-        container.empty();
-        selectedModifierGroups.forEach(group => {
-            let html = `<div class="border rounded p-2 mb-2">
-                            <strong>${group.name}</strong>
-                            <button type="button" class="btn btn-sm btn-danger float-end" onclick="removeModifierGroup(${group.id})">X</button>
-                            <ul>`;
-            group.modifiers.forEach(modifier => {
-                html += `<li>${modifier.name} (Rate: ${modifier.rate})</li>`;
-            });
-            html += `</ul></div>`;
-            container.append(html);
-        });
-    }
-
-    function removeModifierGroup(groupId) {
-        selectedModifierGroups = selectedModifierGroups.filter(g => g.id !== groupId);
-        updateSelectedModifierGroups();
-    }
-
-    function addItem() {
-        let formData = new FormData();
-        formData.append("Name", $("#itemName").val());
-        formData.append("CategoryId", $("#addItemCategoryDropdown").val());
-        formData.append("Rate", $("#rate").val());
-        formData.append("Quantity", $("#quantity").val());
-        formData.append("ItemType", $("#itemType").val());
-        formData.append("UnitId", $("#unitDropDown").val());
-        formData.append("IsAvailable", $("#isAvailable").prop("checked"));
-        formData.append("Shortcode", $("#shortCode").val());
-        formData.append("Description", $("#description").val());
-        formData.append("Imageurl", $("#imageUrl").val());
-        formData.append("ModifierGroupIds", selectedModifierGroups.map(g => g.id).join(",")); // Send Modifier Group IDs
-
-        $.ajax({
-            url: "/Menu/AddItem",
-            method: "POST",
-            data: formData,
-            contentType: false,
-            processData: false,
-            success: function (response) {
-                showToast("Item added successfully!", "success", "");
-                location.reload(); 
-            },
-            error: function (xhr, status, error) {
-                showToast("Error adding item!", "error", "");
-            }
-        });
-    }
-</script>
-
-
-
-
-
-
-[HttpGet]
-public IActionResult GetModifiersByGroup(int groupId)
-{
-    var modifiers = _context.Modifiertomodifiergroup
-        .Where(mg => mg.ModifiergroupId == groupId && mg.Isdeleted != true)
-        .Select(mg => new
-        {
-            mg.Modifier.ModifierId,
-            mg.Modifier.Modifiername,
-            mg.Modifier.Rate
-        })
-        .ToList();
-
-    return Json(modifiers);
-}
-
-[HttpPost]
-public async Task<IActionResult> AddItem(AddItemViewModel model)
-{
-    if (!ModelState.IsValid)
-    {
-        return BadRequest(new { error = true, message = "Validation failed", errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
-    }
-
-    var item = new Item
-    {
-        Name = model.Name,
-        Description = model.Description,
-        Itemtype = model.ItemType,
-        Rate = model.Rate,
-        Quantity = model.Quantity,
-        Isavailable = model.IsAvailable,
-        CategoryId = model.CategoryId,
-        UnitId = model.UnitId,
-        Defaulttax = model.DefaultTax,
-        Taxpercentage = model.TaxPercentage,
-        Shortcode = model.ShortCode,
-        Imageurl = model.Imageurl,
-        Createdat = DateTime.UtcNow,
-        Updatedat = DateTime.UtcNow,
-        Createdby = model.CreatedBy,
-        Updatedby = model.UpdatedBy
-    };
-
-    _context.Items.Add(item);
-    await _context.SaveChangesAsync();
-
-    if (!string.IsNullOrEmpty(model.ModifierGroupIds))
-    {
-        var modifierGroupIds = model.ModifierGroupIds.Split(',').Select(int.Parse).ToList();
-        foreach (var groupId in modifierGroupIds)
-        {
-            _context.Itemtomodifiergroups.Add(new Itemtomodifiergroup
-            {
-                ItemId = item.ItemId,
-                ModifiergroupId = groupId,
-                Isdeleted = false
-            });
-        }
-        await _context.SaveChangesAsync();
-    }
-
-    return Json(new { success = true, message = "Item added successfully!" });
-}
-
-
-
-
-
-
-
-public class AddItemViewModel
-{
-    public string Name { get; set; }
-    public int CategoryId { get; set; }
-    public string ItemType { get; set; }
-    public decimal Rate { get; set; }
-    public int Quantity { get; set; }
-    public bool IsAvailable { get; set; }
-    public int UnitId { get; set; }
-    public bool DefaultTax { get; set; }
-    public decimal TaxPercentage { get; set; }
-    public string ShortCode { get; set; }
-    public string Imageurl { get; set; }
-    public string Description { get; set; }
-    public int CreatedBy { get; set; }
-    public int UpdatedBy { get; set; }
-    public string ModifierGroupIds { get; set; } // Stores selected Modifier Group IDs as CSV
-}
-
-
-
-
-
-
-
-
-
-public class Itemtomodifiergroup
-{
-    public int ItemtogroupId { get; set; }
-    public int? ItemId { get; set; }
-    public int? ModifiergroupId { get; set; }
-    public bool? Isdeleted { get; set; }
-    public virtual Item? Item { get; set; }
-    public virtual Modifiergroup? Modifiergroup { get; set; }
-}
-
-
-
-
-=====================================
-
-
-
-
-<script>
-    updatePaginationButtons(@Model.CurrentPage, @Model.TotalPages);
-</script>
-
-
-
-
-<div class="d-flex align-items-center gap-2">
-    <p class="mb-0" id="paginationInfo"></p>
-    <div>
-        <button id="previousItemPage" type="button"
-            class="border shadow-sm rounded-1 p-1 px-2 bg-transparent"
-            onclick="changePage(-1)" disabled>
-            <i class="bi bi-chevron-left"></i>
-        </button>
-        <button id="nextItemPage" type="button"
-            class="border shadow-sm rounded-1 p-1 px-2 bg-transparent"
-            onclick="changePage(1)" disabled>
-            <i class="bi bi-chevron-right"></i>
-        </button>
-    </div>
-</div>
-
-
-
-
-
-<script>
-    let currentPage = 1;
-    let totalPages = 1;
-
-    function updatePaginationButtons(page, total) {
-        currentPage = page;
-        totalPages = total;
-
-        $("#previousItemPage").prop("disabled", currentPage <= 1);
-        $("#nextItemPage").prop("disabled", currentPage >= totalPages);
-
-        $("#paginationInfo").text(`Showing ${((currentPage - 1) * $("#pageSizeDropDown").val()) + 1}-${Math.min(currentPage * $("#pageSizeDropDown").val(), total * $("#pageSizeDropDown").val())} of ${total * $("#pageSizeDropDown").val()}`);
-    }
-
-    function changePage(step) {
-        let newPage = currentPage + step;
-        if (newPage < 1 || newPage > totalPages) return;
-
-        loadItems(newPage);
-    }
-
-    function loadItems(page) {
-        let pageSize = $("#pageSizeDropDown").val();
-
-        $.ajax({
-            url: "/Menu/GetItems",
-            type: "GET",
-            data: { page: page, pageSize: pageSize },
-            success: function (response) {
-                $("#itemContainer").html(response);
-            },
-            error: function () {
-                showToast("Error loading items", "error", "Error");
-            }
-        });
-    }
-
-    $("#pageSizeDropDown").change(function () {
-        loadItems(1);
-    });
-</script>
-
-
-
-
-==============================================================
-===============================================================
-===============================================================
-===============================================================
-===============================================================
-
-
-
-
-
-using Microsoft.EntityFrameworkCore;
-using pizzaShop_Models.Models;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-public class ModifierGroupRepository : IModifierGroupRepository
-{
-    private readonly ApplicationDbContext _context;
-
-    public ModifierGroupRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
-
-    public async Task<bool> UpdateModifierGroupAsync(int modifierGroupId, string name, string description, List<int> modifierIds)
-    {
-        var modifierGroup = await _context.Modifiergroups
-            .Include(mg => mg.Modifiertomodifiergroups)
-            .FirstOrDefaultAsync(mg => mg.ModifiergroupId == modifierGroupId);
-
-        if (modifierGroup == null)
-            return false;
-
-        // Update name and description
-        modifierGroup.Groupname = name;
-        modifierGroup.Description = description;
-        modifierGroup.Updatedat = DateTime.UtcNow;
-
-        // Get existing associated modifier IDs
-        var existingModifierIds = modifierGroup.Modifiertomodifiergroups
-            .Select(mg => mg.ModifierId)
-            .ToList();
-
-        // Determine modifiers to add
-        var modifiersToAdd = modifierIds.Except(existingModifierIds).ToList();
-        foreach (var modifierId in modifiersToAdd)
-        {
-            _context.Modifiertomodifiergroups.Add(new Modifiertomodifiergroup
-            {
-                ModifiergroupId = modifierGroupId,
-                ModifierId = modifierId,
-                Isdeleted = false
-            });
-        }
-
-        // Determine modifiers to remove
-        var modifiersToRemove = existingModifierIds.Except(modifierIds).ToList();
-        foreach (var modifierId in modifiersToRemove)
-        {
-            var mapping = await _context.Modifiertomodifiergroups
-                .FirstOrDefaultAsync(mg => mg.ModifiergroupId == modifierGroupId && mg.ModifierId == modifierId);
-            if (mapping != null)
-            {
-                _context.Modifiertomodifiergroups.Remove(mapping);
-            }
-        }
-
-        await _context.SaveChangesAsync();
-        return true;
-    }
-}
-
-
-============================
-
-
-
-using Microsoft.EntityFrameworkCore;
-using pizzaShop_Models.Models;
-using System.Linq;
-using System.Threading.Tasks;
-
-public class ModifierRepository : IModifierRepository
-{
-    private readonly ApplicationDbContext _context;
-
-    public ModifierRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
-
-    public async Task<bool> RemoveModifierFromGroupAsync(int modifierId, int modifierGroupId)
-    {
-        var mapping = await _context.Modifiertomodifiergroups
-            .FirstOrDefaultAsync(m => m.ModifierId == modifierId && m.ModifiergroupId == modifierGroupId);
-
-        if (mapping == null)
-            return false;
-
-        // Remove the relationship
-        _context.Modifiertomodifiergroups.Remove(mapping);
-        await _context.SaveChangesAsync();
-
-        // Check if the modifier is still associated with any group
-        bool hasOtherAssociations = await _context.Modifiertomodifiergroups
-            .AnyAsync(m => m.ModifierId == modifierId);
-
-        // If no other associations exist, delete the modifier itself
-        if (!hasOtherAssociations)
-        {
-            var modifier = await _context.Modifiers.FindAsync(modifierId);
-            if (modifier != null)
-            {
-                _context.Modifiers.Remove(modifier);
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        return true;
-    }
-}
-
-
-
-
-========================================
-
-
-
-
-public async Task<bool> DeleteManyModifiersAsync(int[] modifierIds, int modifierGroupId)
-{
-    try
-    {
-        if (modifierIds == null || modifierIds.Length == 0)
-        {
-            return false;
-        }
-
-        // Get all mappings of the selected modifiers within the specified modifier group
-        var modifierMappings = _context.Modifiertomodifiergroups
-            .Where(m => modifierIds.Contains(m.ModifierId) && m.ModifiergroupId == modifierGroupId)
-            .ToList();
-
-        if (modifierMappings.Any())
-        {
-            // Remove relationships (modifier-to-modifier group)
-            _context.Modifiertomodifiergroups.RemoveRange(modifierMappings);
-            await _context.SaveChangesAsync();
-        }
-
-        // Check which modifiers have NO other associations left
-        var modifiersWithNoAssociations = _context.Modifiers
-            .Where(m => modifierIds.Contains(m.ModifierId) &&
-                        !_context.Modifiertomodifiergroups.Any(mm => mm.ModifierId == m.ModifierId))
-            .ToList();
-
-        if (modifiersWithNoAssociations.Any())
-        {
-            // Delete modifiers that have no associations left
-            _context.Modifiers.RemoveRange(modifiersWithNoAssociations);
-            await _context.SaveChangesAsync();
-        }
-
-        return true;
-    }
-    catch (Exception)
-    {
-        return false;
-    }
-}
-
-
-=====================================
-
-
-<div class="modal fade text-black" id="addUpdateItemModal" data-bs-backdrop="static" tabindex="-1"
-    aria-labelledby="addItemModal" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h1 class="modal-title gray-text fw-bold fs-5 px-3" id="modalTitle">
-                    Add New Menu Item
-                </h1>
-                <button id="closeItemModal" type="button" class="btn-close" data-bs-dismiss="modal"
-                    aria-label="Close"></button>
-            </div>
-            <div class="modal-body row gx-2">
-                <input type="hidden" id="itemId" value="0" />
-                <div class="col-12 col-lg-8">
-                    <div class="row px-2">
-                        <div class="col-sm-6 form-floating mb-3">
-                            <select id="addItemCategoryDropdown" class="form-select form-select-lg custom-border">
-                                <option value="" disabled selected>Category</option>
-                                @foreach (var category in Model.Categories)
-                                {
-                                    <option value="@category.CategoryId">@category.CategoryName</option>
-                                }
-                            </select>
-                            <label for="category">Category</label>
-                        </div>
-                        <div class="col-sm-6 form-floating mb-3">
-                            <input id="itemName" type="text" class="form-control form-control-lg custom-border"
-                                placeholder="Item Name" />
-                            <label for="itemName">Item Name</label>
-                        </div>
-                        <div class="col-sm-6 form-floating mb-3">
-                            <select id="modifierGroupDropdown" class="form-select custom-border">
-                                <option value="" disabled selected>Select Modifier Group</option>
-                                @foreach (var group in Model.ModifierGroups)
-                                {
-                                    <option value="@group.ModifiergroupId">@group.Groupname</option>
-                                }
-                            </select>
-                            <label for="modifierGroupDropdown">Modifier Groups</label>
-                        </div>
-
-                        <div id="selectedModifierGroups" class="col-12 mt-2">
-                            <!-- Selected groups will be displayed here -->
-                        </div>
-
-                        <div class="col-12">
-                            <button type="button" onclick="saveItem()"
-                                class="btn btn-primary p-2 px-4 border-0 rounded-1 fw-semibold">
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@section Scripts {
-    <script>
-        let selectedModifierGroups = [];
-
-        function openAddUpdateModal(item = null) {
-            $("#itemId").val(item ? item.ItemId : "0");
-            $("#itemName").val(item ? item.Name : "");
-            $("#addItemCategoryDropdown").val(item ? item.CategoryId : "");
-            $("#selectedModifierGroups").html("");
-            selectedModifierGroups = [];
-
-            if (item && item.ModifierGroups) {
-                item.ModifierGroups.forEach(group => {
-                    selectedModifierGroups.push(group.ModifiergroupId);
-                    $("#selectedModifierGroups").append(`
-                        <div class="d-flex align-items-center justify-content-between border p-2 rounded mt-2" id="modifierGroup_${group.ModifiergroupId}">
-                            <span>${group.Groupname}</span>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="removeModifierGroup('${group.ModifiergroupId}')">
-                                Remove
-                            </button>
-                        </div>
-                    `);
-                    $("#modifierGroupDropdown option[value='" + group.ModifiergroupId + "']").prop("disabled", true);
-                });
-            }
-
-            $("#modalTitle").text(item ? "Update Menu Item" : "Add New Menu Item");
-            $("#addUpdateItemModal").modal("show");
-        }
-
-        $(document).ready(function () {
-            $("#modifierGroupDropdown").change(function () {
-                let selectedGroupId = $(this).val();
-                let selectedGroupName = $("#modifierGroupDropdown option:selected").text();
-                if (selectedGroupId && !selectedModifierGroups.includes(selectedGroupId)) {
-                    selectedModifierGroups.push(selectedGroupId);
-                    $("#selectedModifierGroups").append(`
-                        <div class="d-flex align-items-center justify-content-between border p-2 rounded mt-2" id="modifierGroup_${selectedGroupId}">
-                            <span>${selectedGroupName}</span>
-                            <button type="button" class="btn btn-danger btn-sm" onclick="removeModifierGroup('${selectedGroupId}')">
-                                Remove
-                            </button>
-                        </div>
-                    `);
-                    $("#modifierGroupDropdown option[value='" + selectedGroupId + "']").prop("disabled", true);
-                }
-            });
-        });
-
-        function removeModifierGroup(groupId) {
-            selectedModifierGroups = selectedModifierGroups.filter(id => id !== groupId);
-            $("#modifierGroup_" + groupId).remove();
-            $("#modifierGroupDropdown option[value='" + groupId + "']").prop("disabled", false);
-        }
-
-        function saveItem() {
-            let itemId = $("#itemId").val();
-            let itemName = $("#itemName").val();
-            let categoryId = $("#addItemCategoryDropdown").val();
-
-            let formData = {
-                ItemId: itemId,
-                Name: itemName,
-                CategoryId: categoryId,
-                ModifierGroups: selectedModifierGroups
-            };
-
-            let url = itemId == "0" ? "/Menu/AddItem" : "/Menu/UpdateItem";
-            let method = itemId == "0" ? "POST" : "PUT";
-
-            $.ajax({
-                url: url,
-                method: method,
-                contentType: "application/json",
-                data: JSON.stringify(formData),
-                success: function (response) {
-                    if (response.success) {
-                        showToast(response.message, "success", "Success");
-                        $("#addUpdateItemModal").modal("hide");
-                    } else {
-                        showToast(response.message, "error", "Error");
-                    }
+                GlobalSettings = {
+                    PaperSize = PaperKind.A4,
+                    Orientation = Orientation.Portrait,
+                    Margins = new MarginSettings { Top = 10, Bottom = 10, Left = 10, Right = 10 },
                 },
-                error: function (xhr) {
-                    showToast("Error while processing item.", "error", "Error");
+                Objects = {
+                    new ObjectSettings() {
+                        HtmlContent = htmlContent,
+                        WebSettings = { DefaultEncoding = "utf-8" },
+                    },
                 }
-            });
+            };
+
+            return _converter.Convert(pdfDocument);
         }
-    </script>
-}
 
-
-
-
-
-[HttpPut]
-public async Task<IActionResult> UpdateItem([FromBody] AddItemViewModel model)
-{
-    if (!ModelState.IsValid)
-    {
-        return BadRequest(new { success = false, message = "Invalid data", errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage) });
-    }
-
-    var existingItem = await _context.Items.Include(i => i.Itemtomodifiergroups)
-                                           .FirstOrDefaultAsync(i => i.ItemId == model.ItemId);
-
-    if (existingItem == null)
-    {
-        return NotFound(new { success = false, message = "Item not found" });
-    }
-
-    existingItem.Name = model.Name;
-    existingItem.CategoryId = model.CategoryId;
-    existingItem.Updatedat = DateTime.UtcNow;
-
-    var existingGroupIds = existingItem.Itemtomodifiergroups.Select(x => x.ModifiergroupId).ToList();
-
-    // Remove relations that are not in the updated list
-    var groupsToRemove = existingItem.Itemtomodifiergroups.Where(x => !model.ModifierGroups.Contains(x.ModifiergroupId)).ToList();
-    _context.Itemtomodifiergroups.RemoveRange(groupsToRemove);
-
-    // Add new relations
-    var groupsToAdd = model.ModifierGroups.Except(existingGroupIds).ToList();
-    foreach (var groupId in groupsToAdd)
-    {
-        _context.Itemtomodifiergroups.Add(new Itemtomodifiergroup
+        // Render View to String
+        private async Task<string> RenderViewToStringAsync<TModel>(string viewName, TModel model)
         {
-            ItemId = existingItem.ItemId,
-            ModifiergroupId = groupId
-        });
-    }
+            var actionContext = GetActionContext();
+            var viewResult = _viewEngine.FindView(actionContext, viewName, false);
 
-    await _context.SaveChangesAsync();
-    return Json(new { success = true, message = "Item updated successfully" });
-}
+            if (viewResult.View == null)
+            {
+                throw new ArgumentNullException($"{viewName} does not match any available view.");
+            }
 
+            using (var sw = new StringWriter())
+            {
+                var viewContext = new ViewContext(
+                    actionContext,
+                    viewResult.View,
+                    new ViewDataDictionary<TModel>(
+                        new EmptyModelMetadataProvider(),
+                        new ModelStateDictionary())
+                    {
+                        Model = model
+                    },
+                    new TempDataDictionary(actionContext.HttpContext, new TempDataDictionaryFactory(new SessionStateTempDataProvider())),
+                    sw,
+                    new HtmlHelperOptions()
+                );
 
+                await viewResult.View.RenderAsync(viewContext);
+                return sw.ToString();
+            }
+        }
 
-
-
-
-
-
-public async Task<bool> UpdateItemAsync(AddItemViewModel model)
-{
-    var existingItem = await _context.Items.Include(i => i.Itemtomodifiergroups)
-                                           .FirstOrDefaultAsync(i => i.ItemId == model.ItemId);
-    if (existingItem == null) return false;
-
-    existingItem.Name = model.Name;
-    existingItem.CategoryId = model.CategoryId;
-    existingItem.Updatedat = DateTime.UtcNow;
-
-    // Manage Modifier Group Relations
-    _context.Itemtomodifiergroups.RemoveRange(existingItem.Itemtomodifiergroups);
-    foreach (var groupId in model.ModifierGroups)
-    {
-        _context.Itemtomodifiergroups.Add(new Itemtomodifiergroup
+        // Create ActionContext
+        private ActionContext GetActionContext()
         {
-            ItemId = existingItem.ItemId,
-            ModifiergroupId = groupId
-        });
+            var httpContext = new DefaultHttpContext { RequestServices = _serviceProvider };
+            return new ActionContext(httpContext, new RouteData(), new ActionDescriptor());
+        }
     }
-
-    await _context.SaveChangesAsync();
-    return true;
 }
 
+
+---------------
+
+builder.Services.AddScoped<OrderPdfService>();
+
+--------------
+
+@model pizzaShop_Models.ViewModels.OrderViewModel
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Order Invoice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .order-details {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .order-details th, .order-details td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .order-details th {
+            background-color: #f2f2f2;
+        }
+        .total {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Order Invoice</h2>
+        <p><strong>Order ID:</strong> @Model.OrderId</p>
+        <p><strong>Customer:</strong> @Model.CustomerName</p>
+    </div>
+
+    <table class="order-details">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Price (₹)</th>
+                <th>Total (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.OrderItems)
+            {
+                <tr>
+                    <td>@item.ItemName</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.Price</td>
+                    <td>@(item.Quantity * item.Price)</td>
+                </tr>
+            }
+            <tr>
+                <td colspan="3" class="total">Grand Total</td>
+                <td class="total">₹@Model.TotalAmount</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><strong>Order Date:</strong> @Model.OrderDate.ToString("dd-MM-yyyy")</p>
+</body>
+</html>
+
+
+
+using Microsoft.AspNetCore.Mvc;
+using pizzaShop_Models.ViewModels;
+using pizzaShop_Services.PdfService;
+
+namespace pizzaShop.Controllers
+{
+    public class OrderController : Controller
+    {
+        private readonly OrderPdfService _orderPdfService;
+
+        public OrderController(OrderPdfService orderPdfService)
+        {
+            _orderPdfService = orderPdfService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> DownloadOrderPdf(int orderId)
+        {
+            // Simulate fetching order details from database
+            var orderViewModel = GetSampleOrder(orderId);
+
+            var pdfBytes = await _orderPdfService.GenerateOrderPdfAsync("/Views/Order/OrderPdfTemplate.cshtml", orderViewModel);
+
+            return File(pdfBytes, "application/pdf", $"Order_{orderViewModel.OrderId}.pdf");
+        }
+
+        // Simulated sample data for order
+        private OrderViewModel GetSampleOrder(int orderId)
+        {
+            return new OrderViewModel
+            {
+                OrderId = orderId,
+                CustomerName = "John Doe",
+                OrderDate = DateTime.Now.AddDays(-5),
+                TotalAmount = 1299.99m,
+                OrderItems = new List<OrderItemViewModel>
+                {
+                    new OrderItemViewModel { ItemName = "Pizza Margherita", Quantity = 2, Price = 299.99m },
+                    new OrderItemViewModel { ItemName = "Garlic Bread", Quantity = 1, Price = 199.99m },
+                    new OrderItemViewModel { ItemName = "Soft Drink", Quantity = 3, Price = 99.99m }
+                }
+            };
+        }
+    }
+}
 
 
 
@@ -1252,276 +605,134 @@ public async Task<bool> UpdateItemAsync(AddItemViewModel model)
 =========================================
 
 
-
-$("#addItemModifierGroupDropDown").change(function () {
-    let selectedModifierGroupId = $(this).val();
-    let selectedModifierGroupName = $("#addItemModifierGroupDropDown option:selected").text();
-    let selectedModifierGroup = $("#addItemModifierGroupDropDown option:selected").data("modifiers");
-
-    let minValue = 0;
-    let maxValue = selectedModifierGroup.length; // Total number of modifiers in group
-
-    let modifierList = `<ul class="mt-2" style="list-style-type:disc;">`;
-    for (var i = 0; i < selectedModifierGroup.length; i++) {
-        modifierList += `<li class="d-flex justify-content-between align-items-center p-0">
-                            <p>${selectedModifierGroup[i].Modifiername}</p>
-                            <p>${selectedModifierGroup[i].Rate}</p>
-                         </li>`;
-    }
-    modifierList += `</ul>`;
-
-    // Generate Min & Max Selection Dropdowns
-    let minDropdown = `<select class="form-select min-selection" id="minSelection-${selectedModifierGroupId}" 
-                        onchange="updateMaxDropdown('${selectedModifierGroupId}')">
-                        ${generateDropdownOptions(0, maxValue)}
-                       </select>`;
-
-    let maxDropdown = `<select class="form-select max-selection" id="maxSelection-${selectedModifierGroupId}">
-                        ${generateDropdownOptions(0, maxValue)}
-                       </select>`;
-
-    if (selectedModifierGroupId && !selectedModifierGroups.includes(selectedModifierGroupId)) {
-        selectedModifierGroups.push(selectedModifierGroupId);
-        $("#selectedModifierGroupsContainer").append(`
-            <div class="d-flex flex-column align-items-center justify-content-between p-2 border rounded mt-2" id="modifierGroup-${selectedModifierGroupId}">
-                <div class="d-flex align-items-center justify-content-between px-2 w-100">
-                    <span class="fs-5 gray-text">${selectedModifierGroupName}</span>
-                    <button type="button" class="border-0 bg-transparent" onclick="removeModifierGroup('${selectedModifierGroupId}')">
-                        <i class="bi bi-trash fs-5 text-secondary"></i>
-                    </button>
-                </div>
-                <div class="w-100">
-                    <span>${modifierList}</span>               
-                </div>
-                <div class="d-flex justify-content-between w-100 mt-2">
-                    <div class="d-flex flex-column">
-                        <label class="small">Min Selectable</label>
-                        ${minDropdown}
-                    </div>
-                    <div class="d-flex flex-column">
-                        <label class="small">Max Selectable</label>
-                        ${maxDropdown}
-                    </div>
-                </div>
-            </div>
-        `);
-        $("#addItemModifierGroupDropDown option[value='" + selectedModifierGroupId + "']").prop("disabled", true);
-    }
-});
-
-// Function to generate dropdown options dynamically
-function generateDropdownOptions(start, end) {
-    let options = "";
-    for (let i = start; i <= end; i++) {
-        options += `<option value="${i}">${i}</option>`;
-    }
-    return options;
-}
-
-// Function to update Max Selection Dropdown when Min is changed
-function updateMaxDropdown(groupId) {
-    let minSelectedValue = parseInt($(`#minSelection-${groupId}`).val());
-    let maxDropdown = $(`#maxSelection-${groupId}`);
-
-    // Regenerate max dropdown options starting from min value
-    maxDropdown.html(generateDropdownOptions(minSelectedValue, maxDropdown[0].length - 1));
-}
-
-// Function to remove selected Modifier Group
-function removeModifierGroup(groupId) {
-    selectedModifierGroups = selectedModifierGroups.filter(id => id !== groupId);
-    $(`#modifierGroup-${groupId}`).remove();
-    $("#addItemModifierGroupDropDown option[value='" + groupId + "']").prop("disabled", false);
-}
+Install-Package Rotativa.AspNetCore
 
 
 
-=================================
 
+using Rotativa.AspNetCore;
 
-[Route("Menu")]
-public class MenuController : Controller
-{
-    private readonly IMenuService _menuService;
+var builder = WebApplication.CreateBuilder(args);
 
-    public MenuController(IMenuService menuService)
-    {
-        _menuService = menuService;
-    }
+builder.Services.AddControllersWithViews();
 
-    [HttpPost("AddItem")]
-    public async Task<IActionResult> AddItem([FromBody] AddItemViewModel model)
-    {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            return BadRequest(new { success = false, message = "Validation Error", errors });
-        }
+// Add Rotativa Configuration
+var app = builder.Build();
+app.UseStaticFiles();
+app.UseRouting();
+app.UseAuthorization();
 
-        var result = await _menuService.AddItemAsync(model);
-        return result ? Ok(new { success = true, message = "Item added successfully!" }) 
-                      : BadRequest(new { success = false, message = "Failed to add item." });
-    }
+// Configure Rotativa
+RotativaConfiguration.Setup(app.Environment.WebRootPath, "Rotativa");
 
-    [HttpPost("UpdateItem")]
-    public async Task<IActionResult> UpdateItem([FromBody] UpdateItemViewModel model)
-    {
-        if (!ModelState.IsValid)
-        {
-            var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
-            return BadRequest(new { success = false, message = "Validation Error", errors });
-        }
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
-        var result = await _menuService.UpdateItemAsync(model);
-        return result ? Ok(new { success = true, message = "Item updated successfully!" }) 
-                      : BadRequest(new { success = false, message = "Failed to update item." });
-    }
-}
+app.Run();
 
 
 
-=================================
 
+@model pizzaShop_Models.ViewModels.OrderViewModel
 
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Order Invoice</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .order-details { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .order-details th, .order-details td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .order-details th { background-color: #f2f2f2; }
+        .total { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>Order Invoice</h2>
+        <p><strong>Order ID:</strong> @Model.OrderId</p>
+        <p><strong>Customer:</strong> @Model.CustomerName</p>
+    </div>
 
-public class MenuRepository : IMenuRepository
-{
-    private readonly ApplicationDbContext _context;
-
-    public MenuRepository(ApplicationDbContext context)
-    {
-        _context = context;
-    }
-
-    public async Task<bool> AddItemAsync(AddItemViewModel model)
-    {
-        using var transaction = await _context.Database.BeginTransactionAsync();
-
-        try
-        {
-            var item = new Item
+    <table class="order-details">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Price (₹)</th>
+                <th>Total (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.OrderItems)
             {
-                Name = model.Name,
-                Description = model.Description,
-                Itemtype = model.ItemType,
-                Rate = model.Rate,
-                Quantity = model.Quantity,
-                Isavailable = model.IsAvailable,
-                CategoryId = model.CategoryId,
-                UnitId = model.UnitId,
-                Defaulttax = model.DefaultTax,
-                Taxpercentage = model.TaxPercentage,
-                Shortcode = model.ShortCode,
-                Imageurl = model.ImageUrl,
-                Createdat = DateTime.UtcNow,
-                Updatedat = DateTime.UtcNow,
-                Createdby = model.CreatedBy,
-                Updatedby = model.UpdatedBy
-            };
-
-            _context.Items.Add(item);
-            await _context.SaveChangesAsync();
-
-            if (model.SelectedModifierGroupIds != null && model.SelectedModifierGroupIds.Any())
-            {
-                foreach (var groupId in model.SelectedModifierGroupIds)
-                {
-                    var itemToModifierGroup = new Itemtomodifiergroup
-                    {
-                        ItemId = item.ItemId,
-                        ModifiergroupId = groupId,
-                        Isdeleted = false
-                    };
-                    _context.Itemtomodifiergroups.Add(itemToModifierGroup);
-                }
-                await _context.SaveChangesAsync();
+                <tr>
+                    <td>@item.ItemName</td>
+                    <td>@item.Quantity</td>
+                    <td>@item.Price</td>
+                    <td>@(item.Quantity * item.Price)</td>
+                </tr>
             }
+            <tr>
+                <td colspan="3" class="total">Grand Total</td>
+                <td class="total">₹@Model.TotalAmount</td>
+            </tr>
+        </tbody>
+    </table>
 
-            await transaction.CommitAsync();
-            return true;
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            return false;
-        }
-    }
-
-    public async Task<bool> UpdateItemAsync(UpdateItemViewModel model)
-    {
-        using var transaction = await _context.Database.BeginTransactionAsync();
-
-        try
-        {
-            var item = await _context.Items.FindAsync(model.ItemId);
-            if (item == null) return false;
-
-            item.Name = model.Name;
-            item.Description = model.Description;
-            item.Itemtype = model.ItemType;
-            item.Rate = model.Rate;
-            item.Quantity = model.Quantity;
-            item.Isavailable = model.IsAvailable;
-            item.CategoryId = model.CategoryId;
-            item.UnitId = model.UnitId;
-            item.Defaulttax = model.DefaultTax;
-            item.Taxpercentage = model.TaxPercentage;
-            item.Shortcode = model.ShortCode;
-            item.Imageurl = model.ImageUrl;
-            item.Updatedat = DateTime.UtcNow;
-            item.Updatedby = model.UpdatedBy;
-
-            await _context.SaveChangesAsync();
-
-            var existingRelations = _context.Itemtomodifiergroups
-                .Where(mg => mg.ItemId == model.ItemId)
-                .ToList();
-
-            var selectedModifierIds = model.SelectedModifierGroupIds ?? new List<int>();
-
-            var toRemove = existingRelations.Where(mg => !selectedModifierIds.Contains(mg.ModifiergroupId ?? 0)).ToList();
-            var toAdd = selectedModifierIds.Where(id => !existingRelations.Any(mg => mg.ModifiergroupId == id))
-                                           .Select(id => new Itemtomodifiergroup { ItemId = model.ItemId, ModifiergroupId = id, Isdeleted = false })
-                                           .ToList();
-
-            _context.Itemtomodifiergroups.RemoveRange(toRemove);
-            _context.Itemtomodifiergroups.AddRange(toAdd);
-
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            return true;
-        }
-        catch
-        {
-            await transaction.RollbackAsync();
-            return false;
-        }
-    }
-}
+    <p><strong>Order Date:</strong> @Model.OrderDate.ToString("dd-MM-yyyy")</p>
+</body>
+</html>
 
 
-======================
 
 
-public class AddItemViewModel
+
+using Microsoft.AspNetCore.Mvc;
+using pizzaShop_Models.ViewModels;
+using Rotativa.AspNetCore;
+
+namespace pizzaShop.Controllers
 {
-    public string Name { get; set; }
-    public string? Description { get; set; }
-    public string? ItemType { get; set; }
-    public decimal? Rate { get; set; }
-    public int? Quantity { get; set; }
-    public bool? IsAvailable { get; set; }
-    public int CategoryId { get; set; }
-    public int? UnitId { get; set; }
-    public bool? DefaultTax { get; set; }
-    public decimal? TaxPercentage { get; set; }
-    public string? ShortCode { get; set; }
-    public string? ImageUrl { get; set; }
-    public int CreatedBy { get; set; }
-    public int UpdatedBy { get; set; }
-    public List<int>? SelectedModifierGroupIds { get; set; }
+    public class OrderController : Controller
+    {
+        [HttpGet]
+        public IActionResult DownloadOrderPdf(int orderId)
+        {
+            // Simulate fetching order details from the database
+            var orderViewModel = GetSampleOrder(orderId);
+
+            return new ViewAsPdf("OrderPdfTemplate", orderViewModel)
+            {
+                FileName = $"Order_{orderViewModel.OrderId}.pdf",
+                PageSize = Rotativa.AspNetCore.Options.Size.A4,
+                PageOrientation = Rotativa.AspNetCore.Options.Orientation.Portrait
+            };
+        }
+
+        // Simulated sample data for order
+        private OrderViewModel GetSampleOrder(int orderId)
+        {
+            return new OrderViewModel
+            {
+                OrderId = orderId,
+                CustomerName = "John Doe",
+                OrderDate = DateTime.Now.AddDays(-5),
+                TotalAmount = 1299.99m,
+                OrderItems = new List<OrderItemViewModel>
+                {
+                    new OrderItemViewModel { ItemName = "Pizza Margherita", Quantity = 2, Price = 299.99m },
+                    new OrderItemViewModel { ItemName = "Garlic Bread", Quantity = 1, Price = 199.99m },
+                    new OrderItemViewModel { ItemName = "Soft Drink", Quantity = 3, Price = 99.99m }
+                }
+            };
+        }
+    }
 }
+
 
 
 
